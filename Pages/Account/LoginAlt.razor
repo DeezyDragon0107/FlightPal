@@ -1,0 +1,239 @@
+﻿@page "/login"
+@layout NoLayout
+
+
+@using FlightPal.Models.ViewModels
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using System.Security.Claims
+@using System.Threading.Tasks
+
+@inject HttpClient Http
+@inject AuthService authService
+
+@inject AuthenticationStateProvider authStateProvider
+@inject IHttpContextAccessor HttpContextAccessor
+
+@inject NavigationManager Navigation
+<PageTitle>Login</PageTitle>
+<div class="login-container-external">
+    <a class="return" href=""><i class="fi fi-rr-arrow-small-left"> </i>Volver</a>
+
+    <div class="login-container">
+        <div class="login-hero">
+            <div class="hero-content">
+                <div class="logo">
+                  <img src="/imgs/FlightPalLogoPIsoB.png"/>
+                </div>
+
+                <p class="hero-subtitle">Accede a tu cuenta para gestionar reservas, consultar tus viajes y descubrir ofertas exclusivas.</p>
+
+                <ul class="features">
+                    <li>
+                        <i class="fi fi-br-check-circle"></i>
+                        <span>Gestiona todas tus reservas en un solo lugar</span>
+                    </li>
+                    <li>
+                        <i class="fi fi-br-check-circle"></i>
+                        <span>Acceso a ofertas exclusivas para miembros</span>
+                    </li>
+                    <li>
+                        <i class="fi fi-br-check-circle"></i>
+                        <span>Muchos destinos y paquetes a tu alcance</span>
+                    </li>
+         
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="login-form-container">
+
+  
+           <EditForm class="login-form" Model="@Model" FormName="LoginForm" OnValidSubmit="Authenticate">
+                <div class="form-header">
+                    <h2>Bienvenido de nuevo</h2>
+                    <p>Ingresa a tu cuenta</p>
+                </div>
+
+                <div class="input-group">
+                    <InputText required type="text" name="name" maxlength="30" @bind-Value="Model.Email" placeholder="Usuario" />
+                    <i class="fi fi-rr-user"></i>
+                    <ValidationMessage For="@(() => Model.Email)" />
+                </div>
+
+                <div class="input-group">
+                    <InputText maxlength="20" required type=@(Lock ? "password" : "text") @bind-Value="Model.Password" name="password" placeholder="Contraseña" />
+                    <i class=@(Lock ? "fi-rr-lock" : "fi fi-rr-unlock") @onclick="ShowPassword"></i>
+                    <ValidationMessage For="@(() => Model.Password)" />
+                </div>
+
+               
+
+              
+
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    Iniciar Sesión
+                </button>
+
+                <div class="divider">
+				
+                    <span>O</span>
+                </div>
+
+                <button type="button" @onclick="@(()=>Navigation.NavigateTo("sign-up"))" class="btn register">
+                    Registrate
+                </button>
+            </EditForm>
+
+
+        </div>
+    </div>
+
+</div>
+
+<AuthorizeView>
+    <Authorized>
+        @(ToProfile())
+    </Authorized>
+    <NotAuthorized>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+<Modal Displayed="Modal" DisplayedChanged="OcultarModal">
+    @Error
+</Modal>
+
+@code {
+    [SupplyParameterFromForm]
+    public LoginViewModel Model { get; set; } = new();
+    [CascadingParameter]
+    public HttpContext? httpContext { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    public bool Lock { get; set; } = true;
+    public bool Modal { get; set; }
+    public string? Error { get; set; }
+
+
+    public async Task ShowPassword()
+    {
+        Lock = !Lock;
+    }
+
+
+    private async Task Authenticate()
+    {
+        Console.WriteLine($"Intento de login: {Model.Email}");
+        Error = "";
+        if (string.IsNullOrWhiteSpace(Model.Password) || string.IsNullOrWhiteSpace(Model.Email))
+        {
+            await MostrarError("Los campos no pueden estar vacíos");
+        }
+
+        var user = await authService.ValidateUser(Model.Email, Model.Password);
+
+        if (user != null)
+        {
+            await CreateAuthCookie(user);
+            await UpdateBlazorAuthState(user);
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            Error = "Usuario o contraseña incorrectos";
+            await MostrarError(Error);
+            Console.WriteLine("Autenticación fallida");
+            
+        }
+    }
+
+    private async Task CreateAuthCookie(Users user)
+    {
+        try
+        {
+            var httpContext = HttpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Sid, user.Id_user.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, $"{user.Nombre} {user.Apellido}"),
+                    new Claim(ClaimTypes.Role, user.Role)
+
+                };
+
+                var identity = new ClaimsIdentity(claims,
+                    CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+
+
+                await httpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    principal,
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTime.UtcNow.AddHours(2)
+                    });
+
+                Console.WriteLine("Cookie de autenticación creada");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creando cookie: {ex.TargetSite} {ex.Message}");
+        }
+    }
+
+
+    private async Task UpdateBlazorAuthState(Users user)
+    {
+        try
+        {
+            var customProvider = (CustomAuthStateProvider)authStateProvider;
+            if (customProvider != null)
+            {
+                var httpContext = HttpContextAccessor.HttpContext;
+
+                await customProvider.UpdateAuthenticationState(
+                    user,
+                    httpContext);
+
+                Console.WriteLine("Estado de Blazor actualizado");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error actualizando estado Blazor: {ex.Message}");
+        }
+    }
+
+
+
+
+
+
+
+    private async Task MostrarError(string error)
+    {
+        Error = error;
+        Modal = true;
+        StateHasChanged();
+
+    }
+
+    public async Task<bool> OcultarModal()
+    {
+        Modal = false;
+        StateHasChanged();
+        return Modal;
+
+    }
+    public async Task ToProfile()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

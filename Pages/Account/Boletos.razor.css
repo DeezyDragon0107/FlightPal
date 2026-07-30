@@ -1,0 +1,499 @@
+﻿.tickets-section {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    font-family: Montserrat;
+    background-color: #DFE2E7;
+    gap: 1.5rem;
+}
+
+.active-tickets {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    font-family: Montserrat;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.banner {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 1.5rem;
+    gap: 1rem;
+    background-image: linear-gradient(to bottom right,#2860E0, #193B89);
+    border-radius: 1rem;
+    color: white;
+}
+    .banner h5 {
+        font-size: clamp(.6rem, 3vw, .8rem);
+        font-weight: 500;
+    }
+    .banner h3 {
+        font-size: clamp(.8rem, 4vw, 1.2rem);
+        font-weight: 600;
+    }
+
+.ticket {
+    background: white;
+    border-radius: .5rem;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #e5e7eb;
+    min-width: 500px;
+    max-width: 500px;
+}
+
+    .ticket:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+    }
+
+
+
+.ticket-header {
+    position: relative;
+    height: 200px;
+    
+    background-size: cover;
+    background-position: center;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: white;
+    overflow: hidden;
+}
+
+  
+
+/* Logo de Aerolínea */
+.airline-logo {
+    position: absolute;
+    top: 25px;
+    left: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 1;
+}
+
+.logo-circle {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+    .logo-circle img {
+        max-width: 80%;
+        max-height: 80%;
+    }
+
+.logo-placeholder {
+    width: 100%;
+    height: 100%;
+   
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.airline-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+
+.ticket-code-section {
+    position: absolute;
+    top: 10px;
+    right: 30px;
+    text-align: right;
+    z-index: 1;
+}
+
+.ticket-code {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    border-radius: .5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.qr-container {
+    background: white;
+    border-radius: .5rem;
+    display: inline-block;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.qr-placeholder {
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+
+.flight-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.route {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.airport {
+    text-align: center;
+}
+
+.airport-code {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #2563eb;
+    margin-bottom: 5px;
+}
+
+.airport-name {
+    font-size: 0.9rem;
+    color: #6b7280;
+    max-width: 120px;
+}
+
+.route-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.arrow-line {
+    width: 80px;
+    height: 2px;
+    background: #2563eb;
+    position: relative;
+}
+
+    .arrow-line::after {
+        content: '';
+        position: absolute;
+        right: -5px;
+        top: -4px;
+        width: 0;
+        height: 0;
+        border-left: 10px solid #2563eb;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+    }
+
+.flight-duration {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+
+.passenger-info {
+    padding: 30px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1F2937;
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: .5rem;
+ 
+}
+
+/* Detalles adicionales */
+.ticket-details {
+    padding: 25px 30px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.detail-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #f0f7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+    flex-shrink: 0;
+}
+
+.detail-content h4 {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 3px;
+}
+
+.detail-content p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1F2937;
+}
+
+
+.ticket-footer {
+    padding: 20px 30px;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.expiration {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.expiration-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg,  #f59e0b, #f59e0b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.expiration-text h4 {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 3px;
+}
+
+.expiration-text p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color:  #f59e0b;
+}
+
+.ticket-status {
+    padding: 8px 20px;
+    background: #10b981;
+    color: white;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.expired {
+    background: #EF4444;
+}
+
+.sello{
+    width: 8rem;
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    opacity: .9;
+}
+
+.minimalist-pass {
+    font-family: 'Montserrat', sans-serif;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 550px;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 20px 40px;
+}
+
+.minimalist-header {
+    background-color: #1a365d;
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .minimalist-header h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+
+.minimalist-code {
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.minimalist-content {
+    padding: 30px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.minimalist-package-name {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1a365d;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.minimalist-section {
+    margin-bottom: 25px;
+}
+
+.minimalist-section-title {
+    font-size: 0.9rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.minimalist-info-item {
+    display: flex;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.minimalist-label {
+    width: 120px;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.minimalist-value {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.minimalist-highlight {
+    color: #2b6cb0;
+    font-weight: 700;
+}
+
+.minimalist-footer {
+    background-color: #f7fafc;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e2e8f0;
+    position: relative;
+}
+.pase{
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+}
+.minimalist-barcode {
+    font-family: 'Courier New', monospace;
+    font-size: 1.8rem;
+    letter-spacing: 3px;
+}
+
+.minimalist-qr {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #1a365d, #2d3748);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+}
+
+.minimalist-qr img{
+    width: 80px;
+    height: 80px;
+}
+
+.no-element {
+    border-radius: .8rem;
+    background-color: white;
+    width: 100%;
+    display: flex;
+    padding: 2rem;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.no-element img{
+    width: 150px;
+    height: 150px;
+}

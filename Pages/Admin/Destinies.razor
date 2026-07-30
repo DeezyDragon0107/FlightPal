@@ -1,0 +1,579 @@
+﻿@page "/admin/destinies"
+@layout Dashboard
+@attribute [Authorize(Roles = "ADMIN")]
+@inject IDatabaseConnection databaseConnection
+@inject IJSRuntime JS
+
+<PageTitle>Destinos</PageTitle>
+@using ApexCharts
+<link rel="stylesheet" href="/flag-icons-main/flag-icons.css"/>
+<article class="destinies">
+    <section class="title-section">
+        <div class="title-text">
+            <h2>Administrar Ciudades de Destino</h2>
+            <p>Gestión de destinos disponibles</p>
+        </div>
+        <div class="image-title">
+           
+        </div>
+    </section>
+    <section class="destinies-section">
+      
+    <div class="stats-container">
+            <StatCard Nombre="Paises Disponibles" Numero="@Stats[0]" Color="#EF44444F" IconColor="#EF476F">
+                <i class="fi fi-br-earth-americas"></i>
+            </StatCard>
+            <StatCard Nombre="Destinos Activos" Numero="@Stats[1]" Color="rgba(58, 134, 255, 0.1)" IconColor="#4361EE">
+                <i class="fi fi-ss-marker"></i>
+            </StatCard>
+            <StatCard Nombre="Destinos Pendientes" Numero="@Stats[4]" Color="rgba(255, 158, 0, 0.1)" IconColor="#ff9e00">
+                <i class="fi fi-br-clock-three"></i>
+            </StatCard>
+        </div>
+
+    </section>
+    <div class="destinies-bar">
+
+        <h3>Países</h3>
+        <button class="add-destiny" @onclick="@(()=>InsertPais=true)"><i class="fi fi-br-plus"></i> Nuevo País</button>
+    </div>
+    <div class="table-container">
+        <div class="table-inner">
+            <table class="destinos-table">
+                <thead>
+                    <tr>
+                        <th>País</th>
+                        <th>Abreviatura</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if(paises.Any()){
+                        foreach (var pais in paises)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="destino-info">
+                                        <span class="destino-flg fa fa-@(pais.Abreviatura)"></span>
+                                        <div class="destino-details">
+                                            <h4>@pais.Nombre_Pais</h4>
+                                            <p>@pais.Descripcion</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@pais?.Abreviatura</td>
+                                @if(pais.Estado){
+                                    <td><span class="status-badge status-active">Activo</span></td>
+                                } else 
+                                {
+									<td><span class="status-badge status-inactive">Inactivo</span></td>
+
+                                }
+                                <td>
+                                    <div class="table-actions">
+                                        @if (pais.Id_Pais != 0)
+                                        {
+                                            <button class="action-btn" title="Editar" @onclick="@(() => Editar(pais))">
+                                                <i class="fi fi-br-edit"></i>
+                                            </button>
+                                        }
+                                        @if (pais.Id_Pais != 0)
+                                        {
+                                            <button class="action-btn delete" title="Eliminar" @onclick="@(() => Borrar(pais))">
+                                                <i class="fi fi-br-trash-xmark"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                   
+                </tbody>
+            </table>
+        </div>
+    </div>
+	<div class="destinies-bar">
+
+        <h3>Todos los destinos</h3>
+        <button class="add-destiny" @onclick="@(()=>InsertDestiny = true)"><i class="fi fi-br-plus"></i> Nuevo Destino</button>
+    </div>
+    <div class="table-container">
+		<div class="table-inner">
+            <table class="destinos-table">
+                <thead>
+					<tr>
+                        <th>Destino</th>
+                        <th>País</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+               <tbody>
+                    @if (destinos.Any())
+                    {
+                        foreach(var destino in destinos){
+                             <tr>
+                                <td>
+                                    <div class="destino-info">
+                                        <img class="destino-img" src="@destino.GetImageUrl()" />
+                                        <div class="destino-details">
+											    <h4>@destino.Nombre_destino</h4>
+                                                <p>@destino.Descripcion</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@paises.Find(e=>e.Id_Pais==destino.Id_pais).Nombre_Pais</td>
+                                    @if (destino.Estado)
+                                    {
+                                        <td><span class="status-badge status-active">Activo</span></td>
+                                    }
+                                    else
+                                    {
+                                        <td><span class="status-badge status-inactive">Inactivo</span></td>
+                                    }
+
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-btn" title="Editar" @onclick="@(()=>Editar(destino))">
+                                                <i class="fi fi-br-edit"></i>
+                                            </button>
+                                            <button @onclick="@(()=>BorrarDestino(destino))" class="action-btn delete" title="Eliminar">
+                                                <i class="fi fi-br-trash-xmark"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                        </tr>
+                        }
+                       
+                    }
+               </tbody>
+            </table>
+        </div>
+    </div>
+	<div class="charts-section">
+        <div class="chart-container">
+            <ApexChart Options="chartOptions" Title="Reservaciones de vuelo" TItem="FlightRest">
+
+                <ApexPointSeries TItem="FlightRest"
+                                 Name="Vuelos Reservados"
+                                 Items="lista"
+                                 XValue="@(item => item.month)"
+                                 YValue="@(item => item.num)"
+                                 SeriesType="SeriesType.Area">
+
+                </ApexPointSeries>
+
+            </ApexChart>
+        </div>
+        <div class="chart-container">
+            <ApexChart Title="Reservaciones de vuelo" TItem="FlightRest">
+
+                <ApexPointSeries TItem="FlightRest"
+                                 Name="Vuelos Reservados"
+                                 Items="lista"
+                                 XValue="@(item => item.month)"
+                                 YValue="@(item => item.num)"
+                                 SeriesType="SeriesType.Donut">
+
+                </ApexPointSeries>
+
+            </ApexChart>
+        </div>
+
+        
+    </div>
+</article>
+
+<Modal Displayed="InsertPais" DisplayedChanged="@(() => InsertPais = false)">
+   <div class="add-pais">
+		<h3>Agregar un nuevo país</h3>
+        <input type="text" maxlength="40" @bind="CurrentCountry.Nombre_Pais" placeholder="Nombre del país"/>
+		<input type="text" placeholder="Abreviatura" @bind="CurrentCountry.Abreviatura" maxlength="2" />
+        <p>Bandera:</p>
+        <span class="fa fa-@(CurrentCountry.Abreviatura != null? CurrentCountry.Abreviatura.ToLower():"")" style="height: 60px; width: 60px; border-radius: .6rem;"></span>
+        <div class="check">
+            <label for="activo">Activo</label>
+            <input type="checkbox" name="activo" id="activo" @bind="CurrentCountry.Estado"/>
+        </div>
+        <input type="text" placeholder="Descripción" @bind="CurrentCountry.Descripcion"/>
+        <div class="buttons">
+            <button class="cancel" @onclick="@(() => InsertPais = false)">Cancelar</button>
+            <button class="save" @onclick="SaveCountry">Guardar</button>
+        </div>
+		
+   </div>
+</Modal>
+<Modal Displayed="EditPais" DisplayedChanged="@(() => {EditPais = false; CurrentCountry = new Pais();})">
+    <div class="add-pais">
+        <h3>Editar información país</h3>
+        <input type="text" maxlength="40" @bind="CurrentCountry.Nombre_Pais" placeholder="Nombre del país" />
+        <input type="text" placeholder="Abreviatura" @bind="CurrentCountry.Abreviatura" maxlength="2" />
+        <p>Bandera:</p>
+        <span class="fa fa-@(CurrentCountry.Abreviatura != null ? CurrentCountry.Abreviatura.ToLower() : "")" style="height: 60px; width: 60px; border-radius: .6rem;"></span>
+        <div class="check">
+            <label for="activo">Activo</label>
+            <input type="checkbox" name="activo" id="activo" @bind="CurrentCountry.Estado" />
+        </div>
+
+        <input type="text" placeholder="Descripción" @bind="CurrentCountry.Descripcion" />
+        <div class="buttons">
+            <button class="cancel" @onclick="@(() => {EditPais = false; CurrentCountry = new Pais();})">Cancelar</button>
+            <button class="save" @onclick="EditCountry">Guardar</button>
+        </div>
+
+    </div>
+</Modal>
+<Modal Displayed="DeletePais" DisplayedChanged="@(()=>DeletePais = false)">
+    <div class="add-pais">
+		<h3>¿Está seguro de que desea eliminar este país?</h3>
+        <p>Esta acción es irrversible</p>
+        <div class="buttons">
+			<button @onclick="@(()=>DeletePais = false)">Cancelar</button>
+            <button class="cancel" @onclick="DeleteCountry">Eliminar</button>
+        </div>
+    </div>
+</Modal>
+<Modal Displayed="ShowDetails" DisplayedChanged="@(()=>ShowDetails = false)">
+    <div class="add-pais">
+        <div>
+            <span class="fa fa-@(CurrentCountry?.Abreviatura?.ToLower())"> </span>
+        </div>
+    </div>
+</Modal>
+
+@*Modales de Destinos*@
+<Modal Displayed="InsertDestiny" DisplayedChanged="@(() => InsertDestiny = false)">
+    <div class="insert-destiny">
+        <h3>Agregar un nuevo destino</h3>
+        <input @bind="@CurrentDestino.Nombre_destino" type="text" maxlength="30" placeholder="Nombre del destino"/>
+        <select @bind="@CurrentDestino.Id_pais">
+            <option selected disabled value="-1">Pais</option>
+            @foreach(var pais in paises)
+            {
+                <option value="@pais.Id_Pais"><span class="fa fa-@(pais.Abreviatura)"></span> @pais.Nombre_Pais</option>
+            }
+        </select>
+        <div class="check">
+            <label for="estado">Disponible</label>
+            <input @bind="@CurrentDestino.Estado" type="checkbox" id="estado" />
+        </div>
+        
+        <input @bind="@CurrentDestino.Descripcion" placeholder="Descripción"/>
+        <InputFile id="inputFile" accept="image/png, image/jpeg" OnChange="HandleInput"></InputFile>
+        <div class="img-container">
+            <img src="@urlImagen" alt="" />
+        </div>
+		<div class="buttons">
+			<button class="cancel" @onclick="@(()=>InsertDestiny = false)">Cancelar</button>
+            <button @onclick="AgregarDestino">Guardar</button>
+        </div>
+    </div>
+</Modal>
+
+<Modal Displayed="EditDestiny" DisplayedChanged="@(()=> {EditDestiny = false; CurrentDestino = new Destino();})">
+    <div class="insert-destiny">
+        <h3>Agregar un nuevo destino</h3>
+        <input @bind="@CurrentDestino.Nombre_destino" type="text" maxlength="30" placeholder="Nombre del destino" />
+        <select @bind="@CurrentDestino.Id_pais">
+            <option selected disabled value="-1">Pais</option>
+            @foreach (var pais in paises)
+            {
+                <option value="@pais.Id_Pais"><span class="fa fa-@(pais.Abreviatura)"></span> @pais.Nombre_Pais</option>
+            }
+        </select>
+        <div class="check">
+            <label for="estado">Disponible</label>
+            <input @bind="@CurrentDestino.Estado" type="checkbox" id="estado" />
+        </div>
+
+        <input @bind="@CurrentDestino.Descripcion" placeholder="Descripción" />
+        <InputFile id="inputFile" accept="image/png, image/jpeg" OnChange="HandleInput"></InputFile>
+        <div class="img-container">
+            <img src="@urlImagen" alt="" />
+        </div>
+        <div class="buttons">
+            <button class="cancel" @onclick="@(() => {EditDestiny = false; new Destino();})">Cancelar</button>
+            <button @onclick="EditarDestino">Guardar Cambios</button>
+        </div>
+    </div>
+</Modal>
+
+
+@code {
+    IJSObjectReference jsModule;
+    List<FlightRest> lista = new List<FlightRest>() { 
+        new FlightRest { num = 10, month = "Enero" },
+        new FlightRest { num = 14, month = "Febrero" },
+        new FlightRest { num = 30, month = "Marzo" },
+        new FlightRest { num = 18, month = "Abril" },
+        new FlightRest { num = 11, month = "Mayo" },
+        new FlightRest { num = 19, month = "Junio" },
+        new FlightRest { num = 50, month = "Julio" },
+        new FlightRest { num = 70, month = "Agosto" }
+    };
+
+    //Variables
+    List<Pais> paises = new List<Pais>();
+    List<Destino> destinos = new List<Destino>();
+    Pais CurrentCountry { get; set; } = new Pais();
+    public List<string> Stats { get; set; } = new List<string>() { "", "", "-", "-", "-" };
+
+    //Modales
+    public bool InsertPais { get; set; } = false;
+    public bool EditPais { get; set; } = false;
+    public bool DeletePais { get; set; } = false;
+    public bool ShowDetails { get; set; } = false;
+
+    public class FlightRest
+    {
+        public int num { get; set; }
+        public string month { get; set; }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "/app.js");
+        FbConnection conn = await databaseConnection.GetConnectionAsync();
+        paises = (await conn.QueryAsync<Pais>("SELECT * FROM PAIS")).ToList() ;
+        destinos = (await conn.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+        Stats = new List<string>()
+        {
+            paises.Count.ToString(),
+            destinos.Count(e=>e.Estado).ToString(),
+            "-", "-",
+            destinos.Count(e=>e.Estado == false).ToString()
+        };
+
+
+
+    }
+
+    public ApexChartOptions<FlightRest> chartOptions { get; set; } = new ApexChartOptions<FlightRest>
+    {
+        Chart = new Chart
+        {
+            Toolbar = new Toolbar { Show = false }
+        }
+
+    };
+
+
+    //Acciones de paises 
+
+    private async Task SaveCountry(MouseEventArgs args)
+    {
+        try
+        {
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            conn.Execute("INSERT INTO PAIS(NOMBRE_PAIS, ABREVIATURA, ESTADO, DESCRIPCION) VALUES(@Nombre, @Abv, @Estado, @Descripcion )",
+            new
+            {
+                Nombre = CurrentCountry.Nombre_Pais.ToUpper(),
+                Abv = CurrentCountry.Abreviatura.ToLower(),
+                Estado = CurrentCountry.Estado,
+                Descripcion = CurrentCountry.Descripcion
+            });
+            paises = (await conn.QueryAsync<Pais>("SELECT * FROM PAIS")).ToList();
+            StateHasChanged();
+
+            CurrentCountry = new Pais();
+            InsertPais = false;
+        }
+        catch(FbException fbex)
+        {
+            if (fbex.ErrorCode == 335544665)
+            {
+                await JS.InvokeVoidAsync("alert", "El nombre o Avreviatura ingresada ya existe. Ingrese una diferente");
+            }
+
+
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+    }
+
+    public async Task Editar(Pais p)
+    {
+
+        CurrentCountry = p;
+        EditPais = true;
+        StateHasChanged();
+    }
+    private async Task EditCountry()
+    {
+        try
+        {
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            string sql = "UPDATE PAIS SET NOMBRE_PAIS = @Nombre, ABREVIATURA = @Abv, ESTADO = @Estado, DESCRIPCION = @Desc WHERE ID_PAIS = @ID";
+            conn.Execute(sql, new { Nombre = CurrentCountry.Nombre_Pais, Estado = CurrentCountry.Estado, Abv = CurrentCountry.Abreviatura, Desc = CurrentCountry.Descripcion, ID = CurrentCountry.Id_Pais });
+            paises = (await conn.QueryAsync<Pais>("SELECT * FROM PAIS")).ToList();
+            StateHasChanged();
+            CurrentCountry = new Pais();
+            EditPais = false;
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+
+    }
+
+    public async Task Borrar(Pais p)
+    {
+        CurrentCountry = p;
+		DeletePais = true;
+		StateHasChanged();
+	}
+	public async Task DeleteCountry()
+	{
+		try
+		{
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			conn.Execute("DELETE FROM PAIS WHERE ID_PAIS = @Id", new { Id = CurrentCountry.Id_Pais });
+			paises.Remove(CurrentCountry);
+			CurrentCountry = new Pais();
+			DeletePais = false;
+			StateHasChanged();
+		}
+		catch(Exception ex)
+		{
+			Console.WriteLine(ex.Message);
+		}
+
+	}
+}
+
+@code{
+    public bool InsertDestiny { get; set; } = false;
+    public bool EditDestiny { get; set; } = false;
+    public string urlImagen { get; set; } = "";
+    public Destino CurrentDestino { get; set; } = new Destino();
+
+    public async Task HandleInput(InputFileChangeEventArgs e)
+    {
+        if(e.File.Size > 1024 * 1024)
+        {
+            await ClearInputFile();
+            urlImagen = "";
+            return;
+
+        }
+
+        var archivo = e.File;
+        archivo = await archivo.RequestImageFileAsync(archivo.ContentType, 256, 256);
+        var buffer = new byte[archivo.Size];
+        await archivo.OpenReadStream().ReadAsync(buffer);
+        urlImagen = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        CurrentDestino.Imagen = buffer;
+        CurrentDestino.Formato_imagen = archivo.ContentType;
+    }
+
+    private async Task ClearInputFile()
+    {
+        await jsModule.InvokeVoidAsync("clearFileInput");
+    }
+
+    private async Task AgregarDestino()
+    {
+        try
+        {
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            string sql = @"INSERT INTO DESTINOS(ID_PAIS, NOMBRE_DESTINO, IMAGEN, FORMATO_IMAGEN, ESTADO, DESCRIPCION) VALUES(@Id,
+                                                                                                                   @Nombre, @Imagen,
+                                                                                                                   @Formato, @Estado,
+                                                                                                                    @Descripcion)";
+            conn.Execute(sql, new
+            {
+                Id = CurrentDestino.Id_pais,
+                Nombre = CurrentDestino.Nombre_destino,
+                Imagen = CurrentDestino.Imagen,
+                Estado = CurrentDestino.Estado,
+                Formato = CurrentDestino.Formato_imagen,
+                Descripcion = CurrentDestino.Descripcion
+            });
+            destinos = (await conn.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+            InsertDestiny = false;
+            CurrentDestino = new Destino();
+        }catch(FbException fbex)
+        {
+            Console.WriteLine(fbex.Message);
+        }catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+
+    }
+    private async Task Editar(Destino d)
+    {
+        CurrentDestino = d;
+        urlImagen = d.GetImageUrl();
+        EditDestiny = true;
+        StateHasChanged();
+    }
+
+    private async Task EditarDestino()
+    {
+        try
+        {
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            string sql = @"UPDATE DESTINOS SET ID_PAIS = @Id, NOMBRE_DESTINO =  @Nombre, IMAGEN = @Imagen, FORMATO_IMAGEN = @Formato,
+                                                        ESTADO = @Estado, DESCRIPCION =  @Descripcion WHERE ID_DESTINO = @Id_destino";
+            conn.Execute(sql, new
+            {
+                Id = CurrentDestino.Id_pais,
+                Nombre = CurrentDestino.Nombre_destino,
+                Imagen = CurrentDestino.Imagen,
+                Estado = CurrentDestino.Estado,
+                Formato = CurrentDestino.Formato_imagen,
+                Descripcion = CurrentDestino.Descripcion,
+                Id_destino = CurrentDestino.Id_destino
+            });
+            destinos = (await conn.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+            EditDestiny = false;
+            CurrentDestino = new Destino();
+            urlImagen = "";
+        }catch(FbException fbex)
+        {
+            Console.WriteLine(fbex.Message);
+        }catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        } 
+
+    }
+
+    public async Task BorrarDestino(Destino d)
+    {
+        if(await JS.InvokeAsync<bool>("confirm", "¿Está seguro que desea eliminar este destino?"))
+        {
+            try
+            {
+                FbConnection connection = await databaseConnection.GetConnectionAsync();
+                connection.Execute("UPDATE DESTINOS SET ESTADO = FALSE WHERE ID_DESTINO = @Id", new { Id = d.Id_destino });
+                destinos = (await connection.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+                StateHasChanged();
+
+            }catch(Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", "Ocurrió un error eliminando el destino");
+            }
+        }
+        else
+        {
+            return;
+        }
+    }
+    }
+
+
+
+
+

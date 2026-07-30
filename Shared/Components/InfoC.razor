@@ -1,0 +1,29 @@
+﻿
+<div class="container-accordion @(Expanded ? "expanded" : "")   @Style" @onclick="Expand">
+	<div class="title-accordion">
+		<h3>@Title</h3>
+		<button style="@(Expanded ? "transform: rotate(180deg);" : "")"><i class="fi fi-br-angle-down"></i> </button>
+	</div>
+	<div class="accordion-content" @onclick:stopPropagation="true">
+		@ChildContent
+
+	</div>
+</div>
+
+@code {
+	[Parameter]
+	public string? Title { get; set; }
+	[Parameter]
+	public RenderFragment? ChildContent { get; set; }
+	[Parameter]
+	public bool Expanded { get; set; } = false;
+	[Parameter]
+	public string Style { get; set; }
+
+	public async Task Expand()
+	{
+		Expanded = !Expanded;
+		StateHasChanged();
+	}
+
+}

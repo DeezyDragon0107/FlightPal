@@ -1,0 +1,92 @@
+﻿<div class="schedule-container" id="gridView">
+    <div class="week-header">
+        <div class="time-header">Hora</div>
+        @foreach(var day in DaysOfWeek)
+        {
+            <div class="day-header" data-day="0">
+                <div class="day-name">@day.DayOfWeek.ToString()</div>
+                <div class="day-date">@day.ToShortDateString()</div>
+            </div>
+        }
+
+    </div>
+
+    <div class="schedule-body" id="scheduleBody">
+		@for(int i = 6; i<23; i++)
+		{
+			<div class="time-row"> 
+				<div class="time-slot">
+					@i:00
+				</div>
+
+			
+			@foreach (var day in DaysOfWeek)
+			{
+				if(vuelos.Exists(e=> e.Fecha_salida.Date == day.Date && e.Fecha_salida.Hour == i))
+				{
+						Vuelo v = vuelos.Find(e => e.Fecha_salida.Date == day.Date && e.Fecha_salida.Hour == i);
+						Aerolinea aerolinea = aerolineas.Find(e => e.Id_aerolinea == v.Id_aerolinea);
+					<div class="day-slot flight-slot" style="background-image: linear-gradient(to bottom right,@aerolinea.ColorDegradado(), @aerolinea.Color,@aerolinea.ColorDegradadoOscuro())">
+							<img src="@aerolinea.GetImageUrl()" alt="" />
+							@(aerolinea.Abreviatura+v.Id_vuelo.ToString().PadLeft(5,'0'))
+					</div>
+						
+				}
+				else
+				{
+					<div class="day-slot">
+
+					</div>
+				}
+
+			}
+			</div>
+			
+			
+		}
+    </div>
+</div>
+
+
+@code {
+	private DateTime DiaInicial { get; set; }
+	private List<DateTime> DaysOfWeek { get; set; } = new List<DateTime>();
+	[Parameter]
+	public List<Vuelo> vuelos { get; set; } = new List<Vuelo>();
+	[Parameter]
+	public List<Aerolinea> aerolineas { get; set; } = new List<Aerolinea>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await GetDays();
+
+
+	}
+
+
+	public async Task GetDays()
+	{
+		if ((int)DateTime.Now.DayOfWeek != 0)
+		{
+
+			DiaInicial = DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek);
+			DaysOfWeek.Add(DiaInicial);
+			for (int i = 1; i <= 6; i++)
+			{
+
+				DaysOfWeek.Add(DiaInicial.AddDays(i));
+			}
+
+		}
+		else
+		{
+			DiaInicial = DateTime.Now;
+			for (int i = 1; i <= 6; i++)
+			{
+
+				DaysOfWeek.Add(DiaInicial.AddDays(i));
+			}
+		}
+
+	}
+}

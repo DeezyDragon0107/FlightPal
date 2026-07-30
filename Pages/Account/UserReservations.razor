@@ -1,0 +1,145 @@
+﻿@page "/Profile/reservations"
+@layout Dashboard
+@inject IDatabaseConnection databaseConnection
+@inject IJSRuntime JS
+@attribute [Authorize( Roles = "USER")]
+<section class="reservations">
+	  <div class="tabs">
+
+			<input type="radio" name="clase" checked="checked" id="Economica" value="1" />
+			<label for="Economica">Reservaciones de vuelos</label>
+			<div class="contenido">
+			<div class="flight-table-container modal">
+				<div class="table-inner">
+					<table class="flight-table">
+						<thead>
+							<tr>
+								<th>Cliente</th>
+								<th>DNI</th>
+								<th>Fecha</th>
+								<th>Monto total</th>
+								<th>Origen</th>
+								<th>Destino</th>
+								<th>Estado</th>
+							</tr>
+						</thead>
+						<tbody>
+							@if (reservas.Any())
+							{
+								foreach (var ur in reservas)
+								{
+									<tr>
+										<td>@ur.Nombre @ur.Apellido</td>
+										<td>
+											@ur.Dni
+										</td>
+										<td>
+											@ur.Fecha_reserva
+										</td>
+										<td>@ur.Monto_total</td>
+										<td>@destinos.Find(e=>e.Id_destino == vuelos.Find(e=>e.Id_vuelo == ur.Id_vuelo).Destino).Nombre_destino</td>
+										<td>@destinos.Find(e => e.Id_destino == vuelos.Find(e => e.Id_vuelo == ur.Id_vuelo).Origen).Nombre_destino</td>
+										<td><span class="status-badge @(ur.Estado == "APROBADO" ? "status-active" : "") @(ur.Estado == "PENDIENTE" ? "status-pending" : "") ">@ur.Estado</span></td>
+									</tr>
+
+								}
+							}
+							else
+							{
+								<tr>
+									<td colspan="7" style="text-align: center;">
+										Aún no tienes reservas
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			</div>
+
+			<input type="radio" name="clase"  id="juan" value="1" />
+			<label for="juan">Reservaciones de paquetes</label>
+			<div class="contenido">
+			<div class="flight-table-container modal">
+				<div class="table-inner">
+					<table class="flight-table">
+						<thead>
+							<tr>
+								<th>Cliente</th>
+								<th>DNI</th>
+								<th>Fecha</th>
+								<th>Monto total</th>
+								<th>Paquete</th>
+								<th>Destino</th>
+								<th>Estado</th>
+							</tr>
+						</thead>
+						<tbody>
+							@if (reservasP.Any())
+							{
+								foreach (var ur in reservasP)
+								{
+									<tr>
+										<td>@ur.Nombre @ur.Apellido</td>
+										<td>
+											@ur.Dni
+										</td>
+										<td>
+											@ur.Fecha
+										</td>
+										<td>@ur.Monto_total</td>
+										<td>@paquetes.Find(e => e.Id_Paquete == ur.Id_paquete).Nombre_paquete</td>
+										<td>@destinos.Find(e => e.Id_destino == paquetes.Find(e => e.Id_Paquete == ur.Id_paquete).Destino).Nombre_destino</td>
+										<td><span class="status-badge @(ur.Estado == "APROBADO" ? "status-active" : "") @(ur.Estado == "PENDIENTE" ? "status-pending" : "") ">@ur.Estado</span></td>
+									</tr>
+
+								}
+							}
+							else
+							{
+								<tr>
+									<td colspan="7" style="text-align: center;">
+										Aún no tienes reservas
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			</div>
+	</div>
+</section>
+
+@code {
+	[CascadingParameter]
+	private Task<AuthenticationState>? authenticationStateTask { get; set; }
+	public List<UsuarioReserva> reservas{ get; set; } = new List<UsuarioReserva>();
+	public List<UsuarioPaquete> reservasP { get; set; } = new List<UsuarioPaquete>();
+	public List<Vuelo> vuelos { get; set; } = new List<Vuelo>();
+	public List<Destino> destinos { get; set; } = new List<Destino>();
+	public List<Paquete> paquetes { get; set; } = new List<Paquete>();
+	public string Id_usuario { get; set; } = "";
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var autenticationState = await authenticationStateTask!;
+			Id_usuario = autenticationState.User.Claims.First(e => e.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid").Value;
+			FbConnection connection = await databaseConnection.GetConnectionAsync();
+			vuelos = (await connection.QueryAsync<Vuelo>("SELECT * FROM VUELOS")).ToList();
+			destinos = (await connection.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+			paquetes = (await connection.QueryAsync<Paquete>("SELECT * FROM PAQUETES")).ToList();
+			reservas = (await connection.QueryAsync<UsuarioReserva>("SELECT * FROM INFO_RES WHERE ID_USER = @Id", new { Id = Id_usuario })).ToList();
+			reservasP = (await connection.QueryAsync<UsuarioPaquete>("SELECT * FROM INFO_RPAQUETES WHERE ID_USER = @Id", new { Id = Id_usuario })).ToList();
+		}
+		catch(Exception ex)
+		{
+			await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+		}
+
+	}
+
+}

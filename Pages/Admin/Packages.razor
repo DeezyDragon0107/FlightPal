@@ -1,0 +1,612 @@
+﻿@page "/admin/packages"
+@layout Dashboard
+@inject IDatabaseConnection databaseConnection;
+@inject IJSRuntime JS
+@attribute [Authorize(Roles = "ADMIN")]
+
+
+<PageTitle>Paquetes</PageTitle>
+<section class="packages-section">
+
+	<div class="title-section">
+		<div class="title-text">
+            <h2>Paquetes</h2>
+            <p>Configura conjuntos de vuelos y hospedaje en una sola reserva</p>
+        </div>
+		<div class="image-title">
+
+        </div>
+	</div>
+	<div class="stats-container">
+		<StatCard Numero="@Stats[0]" Nombre="Paquetes Activos" Color="rgba(56, 176, 0, 0.1)" IconColor="#38b000"><i class="fi fi-br-box-alt"></i></StatCard>
+		<StatCard Numero="@Stats[1]" Onclick="@(()=>{MReservas = true;})" Style="cursor: pointer;" Nombre="Reservas Activas" Color="#4361EE3F" IconColor="#193A85"><i class="fi fi-br-reservation-table"></i></StatCard>
+		<StatCard Numero="@Stats[2]" Nombre="Paquetes Expirados" Color="#EF44444F" IconColor="#EF476F"><i class="fi fi-br-calendar-xmark"></i></StatCard>
+	</div>
+
+	<div class="package-bar">
+		<h3>Todos los paquetes</h3>
+		<button class="button-add" @onclick="AddPaquete"><i class="fi fi-br-plus"></i> Nuevo Paquete</button>
+
+	</div>
+
+	<div class="package-container">
+        @if (paquetes.Any())
+        {
+            foreach(var p in paquetes)
+            {
+                <div class="package-card">
+
+                    <div class="package-header">
+                        <img src="@p.GetImageUrl()" alt="Santorini" class="package-image">
+                        <div class="package-destination">
+                            <h3>@destinos.Find(e=>e.Id_destino == p.Destino).Nombre_destino</h3>
+                            <p><i class="fi fi-ss-marker"></i> @p.Nombre_paquete</p>
+                        </div>
+                    </div>
+
+                    <div class="package-content">
+                        <div class="package-details">
+                       
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fi fi-sr-plane-alt"></i>
+                                </div>
+                                <div class="detail-info">
+                                    <h4>Vuelo incluido</h4>
+                                    <p>En cualquiera de nuestras aerolineas</p>
+                                </div>
+                            </div>
+                            @if (p.Hospedaje)
+                            {
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-rr-hotel"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Hospedaje</h4>
+                                        <p>Incluido</p>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (p.Comida)
+                            {
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-rr-plate-utensils"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Alimentación</h4>
+                                        <p>Todas las comidas incluidas</p>
+                                    </div>
+                                </div>
+
+                            }
+
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fi fi-rr-calendar-clock"></i>
+                                </div>
+                                <div class="detail-info">
+                                    <h4>Salida</h4>
+                                    <p>@p.Fecha_salida.ToShortDateString()</p>
+                                </div>
+                            </div>
+                        </div>
+                        <InfoC Title="Información"><p>@p.Detalles</p></InfoC>
+                        <div class="package-pricing">
+                            <div>
+                                <div class="package-price">@p.Precio Bs<span>/persona</span></div>
+                                <div class="package-price">@(Math.Round(p.Precio / 350, 2))$</div>
+
+                            </div>
+                            <div class="package-status status-available">@p.Cupos_Disponibles cupos</div>
+                        </div>
+
+                        <div class="package-footer">
+                            <div class="package-actions">
+                                <button @onclick="@(()=>ShowEdit(p))" class="action-btn" title="Editar">
+                                    <i class="fi fi-rr-edit"></i>
+                                </button>
+                                <button class="action-btn delete" title="Eliminar" @onclick="@(()=>Eliminar(p))">
+                                    <i class="fi fi-rr-trash-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+
+
+
+
+           <div class="no-element">
+                <img src="/imgs/viaje.gif" />
+			    <h3>Aun no hay paquetes registrados</h3>
+           </div> 
+        }
+
+      
+
+	</div>
+</section>
+
+<Modal Displayed="MAddPack" DisplayedChanged="@(()=>MAddPack = false)">
+
+        <form @onsubmit="HandleSubmit" method="post">
+                <div class="modal-add-vuelo">
+                            <h3>Añadir paquete</h3>
+
+                            <div class="input-field">
+                                <input required placeholder="Nombre del paquete" type="text" @bind="CurrentPack.Nombre_paquete" maxlength="35" />
+                            </div>
+			                    <div class="input-field">
+                                    <label>Destino</label>
+                                    <select @bind="CurrentPack.Destino">
+
+                                    @foreach(var d in destinos)
+                                    {
+                                        <option value="@d.Id_destino">@d.Nombre_destino</option>
+                                    }
+
+                                    </select>
+                                </div>
+
+			                <div class="input-field descripcion">
+                                <textarea @bind="CurrentPack.Detalles" class="text-area" maxlength="500" placeholder="Descripción"></textarea>
+                            </div>
+			        <div class="input-group">
+                        <div class="input-field">
+					        <label >Fecha de inicio</label>
+					        <input @bind="CurrentPack.Fecha_inicio" required min="@DateTime.Now.ToString("yyyy-MM-dd")" type="date"  />
+                        </div>
+                        <div class="input-field">
+                            <label>Fecha de final</label>
+					        <input required @bind="CurrentPack.Fecha_fin" type="date"  />
+                        </div>
+                        <div class="input-field">
+                            <label>Fecha de salida</label>
+                            <input required @bind="CurrentPack.Fecha_salida" type="date" />
+                        </div>
+                    </div>
+			        <div class="input-group" style="margin-top: .5rem">
+				        <label>Todo incluido</label>
+				        <input @bind="TodoIncluido" type="checkbox" />
+                    </div>
+           
+                        <div class="input-group">
+					        <label>Alimentación</label>
+					        <input @bind="CurrentPack.Comida" type="checkbox" />
+                            <label>Hospedaje</label>
+                            <input @bind="CurrentPack.Hospedaje" type="checkbox" />
+                        </div>
+
+                        <div class="input-group">
+                            <label>Guía de viaje</label>
+                            <input @bind="CurrentPack.Guia" type="checkbox"  />
+                            <label>Recreación</label>
+                            <input @bind="CurrentPack.Actividades" type="checkbox" />
+                        </div>
+
+			            <div class="input-group">
+				            <div class="input-field">
+                                <label>Precio</label>
+                                <input required @bind="CurrentPack.Precio" type="number" placeholder="Precio" min="1" max="1000000000" />
+                            </div>
+                            <div class="input-field">
+                                <label>Cupos disponibles</label>
+                            <input @bind="CurrentPack.Cupos_Disponibles" type="number" required placeholder="Cupos disponibles" min="1" max="1000000000" />
+                            </div>
+                            
+			            	
+			            </div>
+                        <label>Imagen publicitaria</label>
+                        <InputFile id="inputFile" accept="image/png, image/jpeg" OnChange="HandleImage" required></InputFile>
+                            <div class="preview">
+					            <div class="img-upload-container">
+						            <img src="@urlImagen" alt="" />
+					            </div>
+				            </div>
+                        <div class="buttons">
+                            <button class="cancel">Cancelar</button>
+                            <button>Guardar paquete</button>
+                        </div>
+    
+
+
+                </div>
+        </form>
+
+</Modal>
+
+<Modal Displayed="MEditPack" DisplayedChanged="@(() => MEditPack = false)">
+
+    <form @onsubmit="HandleEdit" method="post">
+        <div class="modal-add-vuelo">
+            <h3>Editar paquete</h3>
+
+            <div class="input-field">
+                <input required placeholder="Nombre del paquete" type="text" @bind="CurrentPack.Nombre_paquete" maxlength="35" />
+            </div>
+            <div class="input-field">
+                <label>Destino</label>
+                <select @bind="CurrentPack.Destino">
+
+                    @foreach (var d in destinos)
+                    {
+                        <option value="@d.Id_destino">@d.Nombre_destino</option>
+                    }
+
+                </select>
+            </div>
+
+            <div class="input-field descripcion">
+                <textarea @bind="CurrentPack.Detalles" class="text-area" maxlength="500" placeholder="Descripción"></textarea>
+            </div>
+            <div class="input-group">
+                <div class="input-field">
+                    <label>Fecha de inicio</label>
+                    <input @bind="CurrentPack.Fecha_inicio" required min="@DateTime.Now.ToString("yyyy-MM-dd")" type="date" />
+                </div>
+                <div class="input-field">
+                    <label>Fecha de final</label>
+                    <input required @bind="CurrentPack.Fecha_fin" type="date" />
+                </div>
+                <div class="input-field">
+                    <label>Fecha de salida</label>
+                    <input required @bind="CurrentPack.Fecha_salida" type="date" />
+                </div>
+            </div>
+            <div class="input-group" style="margin-top: .5rem">
+                <label>Todo incluido</label>
+                <input @bind="TodoIncluido" type="checkbox" />
+            </div>
+
+            <div class="input-group">
+                <label>Alimentación</label>
+                <input @bind="CurrentPack.Comida" @onfocusout="VerifyAll" type="checkbox" />
+                <label>Hospedaje</label>
+                <input @bind="CurrentPack.Hospedaje" type="checkbox" />
+            </div>
+
+            <div class="input-group">
+                <label>Guía de viaje</label>
+                <input @bind="CurrentPack.Guia" type="checkbox" />
+                <label>Recreación</label>
+                <input @bind="CurrentPack.Actividades" type="checkbox" />
+            </div>
+
+            <div class="input-group">
+                <div class="input-field">
+                    <label>Precio</label>
+                    <input required @bind="CurrentPack.Precio" type="number" placeholder="Precio" min="1" max="1000000000" />
+                </div>
+                <div class="input-field">
+                    <label>Cupos disponibles</label>
+                    <input @bind="CurrentPack.Cupos_Disponibles" type="number" required placeholder="Cupos disponibles" min="1" max="1000000000" />
+                </div>
+
+
+            </div>
+            <InputFile id="inputFile" accept="image/png, image/jpeg" OnChange="HandleImage"></InputFile>
+            <div class="preview">
+                <div class="img-upload-container">
+                    <img src="@urlImagen" alt="" />
+                </div>
+            </div>
+            <div class="buttons">
+                <button class="cancel">Cancelar</button>
+                <button>Guardar cambios</button>
+            </div>
+
+
+
+        </div>
+    </form>
+
+</Modal>
+
+<Modal Displayed="MReservas" DisplayedChanged="@(()=>MReservas = false)">
+    <div class="flight-table-container modal">
+        <div class="table-inner">
+            <table class="flight-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>DNI</th>
+                        <th>Paquete</th>
+                        <th>Fecha de reserva</th>
+                        <th>Estado</th>
+                        <th>Metodo de Pago</th>
+                        <th>Numero Comprobante</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (paquetes.Any())
+                    {
+                        foreach (var ur in usuarioPaquetes)
+                        {
+                            <tr>
+                                <td>@ur.Nombre @ur.Apellido</td>
+                                <td>
+                                    @ur.Dni
+                                </td>
+                                <td>@(paquetes.Find(e=>e.Id_Paquete == ur.Id_paquete).Nombre_paquete)</td>
+                                <td>
+                                    @ur.Fecha
+                                </td>
+                                <td><span class="status-badge status-pending">Pendiente</span></td>
+
+                                <td>@ur.Metodo_pago</td>
+                                <td>@ur.Numero_comprobante</td>
+                                <td>@ur.Monto_total Bs.</td>
+
+                                <td>
+                                    <div class="table-actions">
+                                       <button class="action-btn approve" @onclick="@(() => UpdateReservas(ur, "APROBADO"))" title="Aprobar"><i class="fi fi-br-checkbox"></i></button>
+                                        <button @onclick="@(() => VerComprobante(ur))" class="action-btn" title="Ver comprobante"><i class="fi fi-sr-credit-card-eye"></i></button>
+                                        <button class="action-btn delete" @onclick="@(() => UpdateReservas(ur, "RECHAZADO"))" title="Rechazar"><i class="fi fi-br-vote-nay"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        }
+                    } 
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</Modal>
+<Modal Displayed="MComprobante" DisplayedChanged="@(() => MComprobante = false)">
+    <img src="@urlImagen" alt="" />
+</Modal>
+
+@code {
+    public bool MAddPack { get; set; } = false;
+    public bool MEditPack { get; set; } = false;
+    public bool MReservas { get; set; } = false;
+    public bool MComprobante { get; set; } = false;
+
+    public Paquete CurrentPack = new Paquete();
+
+    public List<Paquete> paquetes { get; set; } = new List<Paquete>();
+    public List<Destino> destinos { get; set; } = new List<Destino>();
+    public List<UsuarioPaquete> usuarioPaquetes { get; set; } = new List<UsuarioPaquete>();
+
+
+    public string urlImagen = "";
+    IJSObjectReference jsModule;
+    public List<string> Stats { get; set; } = new List<string>() { "", "", "" };
+
+    public bool TodoIncluido {get { return CurrentPack.Todo_incluido; } set
+        {
+            if (value)
+            {
+                CurrentPack.Todo_incluido = value;
+                CurrentPack.Comida = value;
+                CurrentPack.Hospedaje = value;
+                CurrentPack.Guia = value;
+                CurrentPack.Actividades = value;
+            }
+            else
+            {
+                CurrentPack.Todo_incluido = false;
+                CurrentPack.Comida = false;
+                CurrentPack.Hospedaje = false;
+                CurrentPack.Guia = false;
+                CurrentPack.Actividades = false;
+            }
+        } }
+
+    protected override async Task OnInitializedAsync()
+    {
+        jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "/app.js");
+        FbConnection conn = await databaseConnection.GetConnectionAsync();
+        paquetes = (await conn.QueryAsync<Paquete>("SELECT * FROM PAQUETES")).ToList();
+        destinos = (await conn.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+        usuarioPaquetes = (await conn.QueryAsync<UsuarioPaquete>("SELECT * FROM  INFO_RPAQUETES WHERE ESTADO = 'PENDIENTE'")).ToList();
+        ActualizarStats();
+    }
+
+
+    private void AddPaquete(MouseEventArgs args)
+    {
+        if (!destinos.Any())
+        {
+            return;
+        }
+        CurrentPack.Destino = destinos[0].Id_destino;
+        MAddPack = true;
+    }
+
+    private async Task HandleSubmit(EventArgs args)
+    {
+        if (CurrentPack.Fecha_inicio >= CurrentPack.Fecha_fin || CurrentPack.Fecha_salida <= CurrentPack.Fecha_fin)
+        {
+            await JS.InvokeVoidAsync("alert", "Las fechas no pueden ser iguales");
+        }
+        try
+        {
+
+            FbConnection connection = await databaseConnection.GetConnectionAsync();
+            connection.Execute(@"INSERT INTO PAQUETES(NOMBRE_PAQUETE,DESTINO,DETALLES,TODO_INCLUIDO,HOSPEDAJE,FECHA_SALIDA,FECHA_INICIO,FECHA_FIN,
+                                    COMIDA,PRECIO,CUPOS_DISPONIBLES,IMAGEN,FORMATO_IMAGEN,GUIA,ACTIVIDADES) VALUES(@Nombre_paquete, @Destino, @Detalles,
+                                    @Todo_incluido,@Hospedaje, @Fecha_salida, @Fecha_inicio, @Fecha_fin, @Comida, @Precio, @Cupos_disponibles, @Imagen,
+                                     @Formato_imagen, @Guia, @Actividades)", CurrentPack);
+            await JS.InvokeVoidAsync("alert", "Paquete guardado exitosamente");
+            CurrentPack = new Paquete();
+            urlImagen = "";
+            paquetes = (await connection.QueryAsync<Paquete>("SELECT * FROM PAQUETES")).ToList();
+            MAddPack = false;
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error {ex.Message}");
+        }
+    }
+
+
+    private async Task HandleImage(InputFileChangeEventArgs e)
+    {
+        if (e.File.Size > 1024 * 1024)
+        {
+            await ClearInputFile();
+            await JS.InvokeVoidAsync("alert", "El tamaño de la imagen no puede ser superior a 1MB");
+            urlImagen = "";
+            return;
+
+        }
+
+        try
+        {
+            var archivo = e.File;
+            archivo = await archivo.RequestImageFileAsync(archivo.ContentType, 340, 340);
+            var buffer = new byte[archivo.Size];
+            await archivo.OpenReadStream(1024000).ReadAsync(buffer);
+            urlImagen = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            CurrentPack.Imagen = buffer;
+            CurrentPack.Formato_imagen = archivo.ContentType;
+        }
+        catch(Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"error: {ex.Message}");
+            await jsModule.InvokeVoidAsync("clearFileInput");
+        }
+
+        StateHasChanged();
+        // CurrentAerolinea.Imagen = buffer;
+        // CurrentAerolinea.Tipo_imagen = archivo.ContentType;
+    }
+
+    private async Task ClearInputFile()
+    {
+
+        await jsModule.InvokeVoidAsync("clearFileInput");
+
+    }
+
+    private async Task Eliminar(Paquete p)
+    {
+        FbConnection connection = await databaseConnection.GetConnectionAsync();
+
+        if(await JS.InvokeAsync<bool>("confirm", "¿Desea eliminar este paquete?"))
+        {
+
+            await connection.ExecuteAsync("DELETE FROM PAQUETES WHERE ID_PAQUETE = @Id_paquete", p);
+            paquetes = (await connection.QueryAsync<Paquete>("SELECT * FROM PAQUETES")).ToList();
+        }
+        else
+        {
+            return;
+        }
+        await JS.InvokeVoidAsync("alert", "El paquete ha sido eliminado");
+        StateHasChanged();
+
+    }
+
+
+    public async Task ShowEdit(Paquete p)
+    {
+        CurrentPack = p;
+        urlImagen = p.GetImageUrl();
+        MEditPack = true;
+    }
+    private async Task HandleEdit(EventArgs args)
+    {
+
+        if (CurrentPack.Fecha_inicio >= CurrentPack.Fecha_fin || CurrentPack.Fecha_salida <= CurrentPack.Fecha_fin)
+        {
+            await JS.InvokeVoidAsync("alert", "Las fechas no pueden ser iguales");
+        }
+        try
+        {
+
+            FbConnection connection = await databaseConnection.GetConnectionAsync();
+            connection.Execute(@"UPDATE PAQUETES SET NOMBRE_PAQUETE =  @Nombre_paquete, DESTINO = @Destino, DETALLES =  @Detalles, TODO_INCLUIDO = @Todo_incluido,
+                                HOSPEDAJE = @Hospedaje,FECHA_SALIDA = @Fecha_salida, FECHA_INICIO = @Fecha_inicio, FECHA_FIN = @Fecha_fin,
+                                    COMIDA = @Comida,PRECIO = @Precio,CUPOS_DISPONIBLES = @Cupos_disponibles,IMAGEN = @Imagen,FORMATO_IMAGEN = @Formato_imagen,
+                                    GUIA = @Guia, ACTIVIDADES = @Actividades WHERE ID_PAQUETE = @Id_Paquete", CurrentPack);
+            await JS.InvokeVoidAsync("alert", "Paquete guardado exitosamente");
+            CurrentPack = new Paquete();
+            urlImagen = "";
+            paquetes = (await connection.QueryAsync<Paquete>("SELECT * FROM PAQUETES")).ToList();
+            MEditPack = false;
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error {ex.Message}");
+        }
+    }
+
+    public async Task UpdateReservas(UsuarioPaquete ur, string accion)
+    {
+        try
+        {
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            if(accion == "RECHAZADO")
+            {
+                await conn.ExecuteAsync("UPDATE RESERVA_PAQUETES SET ESTADO = @Estado WHERE ID_RESERVAP = @Id_reserva", new
+                {
+                    Estado = accion,
+                    Id_reserva = ur.Id_reservap
+                });
+
+
+
+            }
+            else
+            {
+                await conn.ExecuteAsync("UPDATE RESERVA_PAQUETES SET ESTADO = @Estado WHERE ID_RESERVAP = @Id_reserva", new
+                {
+                    Estado = accion,
+                    Id_reserva = ur.Id_reservap
+                });
+                DateTime FechaV = await conn.QueryFirstAsync<DateTime>("SELECT FECHA_SALIDA FROM PAQUETES WHERE ID_PAQUETE = @Id", new { Id = ur.Id_paquete });
+                await conn.ExecuteAsync(@"INSERT INTO PASE_PAQUETE(ID_USER, ID_RESERVA_P, ID_PAQUETE, FECHA_VENCIMIENTO) VALUES(
+										@Id_user, @Id_reserva, @Id_Vuelo, @Fecha_vencimiento)", new { Id_user = ur.Id_user, Id_reserva = ur.Id_reservap, Id_vuelo = ur.Id_paquete, Fecha_vencimiento = FechaV });
+
+
+            }
+            usuarioPaquetes = (await conn.QueryAsync<UsuarioPaquete>("SELECT * FROM  INFO_RPAQUETES WHERE ESTADO = 'PENDIENTE'")).ToList();
+            await JS.InvokeVoidAsync("alert", "Actualizado");
+            await ActualizarStats();
+            StateHasChanged();
+
+        }catch(Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error {ex.Message}");
+        }
+
+    }
+
+    public async Task VerComprobante(UsuarioPaquete ur)
+    {
+
+        urlImagen = ur.GetImgUrl();
+        MComprobante = true;
+    }
+
+    public async Task ActualizarStats()
+    {
+        Stats = new List<string>()
+        {
+            paquetes.Count(e=>e.Fecha_fin>=DateTime.Now).ToString(),
+             usuarioPaquetes.Count.ToString(),
+             paquetes.Count(e=>e.Fecha_fin<DateTime.Now).ToString()
+
+        };
+    }
+    private void VerifyAll(FocusEventArgs args)
+    {
+        if(CurrentPack.Hospedaje && CurrentPack.Comida && CurrentPack.Actividades && CurrentPack.Guia)
+        {
+            CurrentPack.Todo_incluido = true;
+        }
+    }
+}

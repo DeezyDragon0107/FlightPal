@@ -1,0 +1,579 @@
+﻿@page "/tarifas"
+@rendermode InteractiveServer
+@inject IDatabaseConnection databaseConnection
+@inject IJSRuntime JS
+@inject IDolarService dolarService
+
+<PageTitle>Tarifas</PageTitle>
+
+<section class="paquetes-section">
+    <div class="title-section">
+        <div class="title-text">
+            <h2>Paquetes de viaje</h2>
+            <p>¿Interesado en nuevas experiencias? ¡Echale un vistazo a nuestros paquetes de viaje!</p>
+        </div>
+        <div class="image-title">
+        </div>
+
+    </div>
+
+    <div class="tabs">
+
+        <input type="radio" name="clase" checked="checked" id="Economica" value="1" />
+        <label for="Economica">Económica</label>
+        <div class="contenido">
+
+            @if (paquetes.Any())
+            {
+                foreach (var p in paquetes.FindAll(e=>e.Precio<=35000))
+                {
+                    <div class="package-card">
+
+                        <div class="package-header">
+                            <img src="@p.GetImageUrl()" alt="Santorini" class="package-image">
+                            <div class="package-destination">
+                                <h3>@destinos.Find(e => e.Id_destino == p.Destino).Nombre_destino</h3>
+                                <p><i class="fi fi-ss-marker"></i> @p.Nombre_paquete</p>
+                            </div>
+                        </div>
+
+                        <div class="package-content">
+                            <div class="package-details">
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-sr-plane-alt"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Vuelo incluido</h4>
+                                        <p>En cualquiera de nuestras aerolineas</p>
+                                    </div>
+                                </div>
+                                @if (p.Hospedaje)
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fi fi-rr-hotel"></i>
+                                        </div>
+                                        <div class="detail-info">
+                                            <h4>Hospedaje</h4>
+                                            <p>Incluido</p>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (p.Comida)
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fi fi-rr-plate-utensils"></i>
+                                        </div>
+                                        <div class="detail-info">
+                                            <h4>Alimentación</h4>
+                                            <p>Todas las comidas incluidas</p>
+                                        </div>
+                                    </div>
+
+                                }
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-rr-calendar-clock"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Salida</h4>
+                                        <p>@p.Fecha_salida.ToShortDateString()</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <InfoC Title="Información"><p>@p.Detalles</p></InfoC>
+                            <div class="package-pricing">
+                                <div>
+                                    <div class="package-price">@p.Precio Bs<span>/persona</span></div>
+                                    <div class="package-price">@(Math.Round(p.Precio / Convert.ToDecimal(DolarHoy.Promedio), 2))$</div>
+
+                                </div>
+                                <div class="package-status status-available">@p.Cupos_Disponibles cupos</div>
+                            </div>
+
+                            <div class="package-footer">
+                                <div class="package-actions">
+                                </div>
+                                <button @onclick="@(()=>Reservar(p))" class="btn btn-success btn-sm">
+                                    <i class="fi fi-rr-shopping-cart"></i> Reservar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+
+                <div class="no-element">
+                    <img src="/imgs/tiempo-de-fuego.gif" alt="Alternate Text" />
+                    <h4>Actualmente no hay ofertas disponibles</h4>
+                </div>
+            }
+
+
+        </div>
+
+
+
+        <input type="radio" name="clase" id="PrimeraClase" value="2" />
+        <label for="PrimeraClase">Primera Clase</label>
+        <div class="contenido">
+            @if (paquetes.Any())
+            {
+                foreach (var p in paquetes.FindAll(e => e.Precio > 35000 && e.Precio < 70000))
+                {
+                    <div class="package-card">
+
+                        <div class="package-header">
+                            <img src="@p.GetImageUrl()" alt="Santorini" class="package-image">
+                            <div class="package-destination">
+                                <h3>@destinos.Find(e => e.Id_destino == p.Destino).Nombre_destino</h3>
+                                <p><i class="fi fi-ss-marker"></i> @p.Nombre_paquete</p>
+                            </div>
+                        </div>
+
+                        <div class="package-content">
+                            <div class="package-details">
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-sr-plane-alt"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Vuelo incluido</h4>
+                                        <p>En cualquiera de nuestras aerolineas</p>
+                                    </div>
+                                </div>
+                                @if (p.Hospedaje)
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fi fi-rr-hotel"></i>
+                                        </div>
+                                        <div class="detail-info">
+                                            <h4>Hospedaje</h4>
+                                            <p>Incluido</p>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (p.Comida)
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fi fi-rr-plate-utensils"></i>
+                                        </div>
+                                        <div class="detail-info">
+                                            <h4>Alimentación</h4>
+                                            <p>Todas las comidas incluidas</p>
+                                        </div>
+                                    </div>
+
+                                }
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-rr-calendar-clock"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Salida</h4>
+                                        <p>@p.Fecha_salida.ToShortDateString()</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <InfoC Title="Información"><p>@p.Detalles</p></InfoC>
+                            <div class="package-pricing">
+                                <div>
+                                    <div class="package-price">@p.Precio Bs<span>/persona</span></div>
+                                    <div class="package-price">@(Math.Round(p.Precio / Convert.ToDecimal(DolarHoy.Promedio), 2))$</div>
+
+                                </div>
+                                <div class="package-status status-available">@p.Cupos_Disponibles cupos</div>
+                            </div>
+
+                            <div class="package-footer">
+                                <div class="package-actions">
+                                </div>
+                                <button @onclick="@(() => Reservar(p))" class="btn btn-success btn-sm">
+                                    <i class="fi fi-rr-shopping-cart"></i> Reservar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+
+                <div class="no-element">
+                    <img src="/imgs/tiempo-de-fuego.gif" alt="Alternate Text" />
+                    <h4>Actualmente no hay ofertas disponibles</h4>
+                </div>
+            }
+
+        </div>
+
+        <input type="radio" name="clase" id="ClasePremium" value="3" />
+        <label for="ClasePremium">Clase Premium</label>
+        <div class="contenido">
+
+            @if (paquetes.Any())
+            {
+                foreach (var p in paquetes.FindAll(e => e.Precio >=70000))
+                {
+                    <div class="package-card">
+
+                        <div class="package-header">
+                            <img src="@p.GetImageUrl()" alt="Santorini" class="package-image">
+                            <div class="package-destination">
+                                <h3>@destinos.Find(e => e.Id_destino == p.Destino).Nombre_destino</h3>
+                                <p><i class="fi fi-ss-marker"></i> @p.Nombre_paquete</p>
+                            </div>
+                        </div>
+
+                        <div class="package-content">
+                            <div class="package-details">
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-sr-plane-alt"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Vuelo incluido</h4>
+                                        <p>En cualquiera de nuestras aerolineas</p>
+                                    </div>
+                                </div>
+                                @if (p.Hospedaje)
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fi fi-rr-hotel"></i>
+                                        </div>
+                                        <div class="detail-info">
+                                            <h4>Hospedaje</h4>
+                                            <p>Incluido</p>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (p.Comida)
+                                {
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fi fi-rr-plate-utensils"></i>
+                                        </div>
+                                        <div class="detail-info">
+                                            <h4>Alimentación</h4>
+                                            <p>Todas las comidas incluidas</p>
+                                        </div>
+                                    </div>
+
+                                }
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <i class="fi fi-rr-calendar-clock"></i>
+                                    </div>
+                                    <div class="detail-info">
+                                        <h4>Salida</h4>
+                                        <p>@p.Fecha_salida.ToShortDateString()</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <InfoC Title="Información"><p>@p.Detalles</p></InfoC>
+                            <div class="package-pricing">
+                                <div>
+                                    <div class="package-price">@p.Precio Bs<span>/persona</span></div>
+                                    <div class="package-price">@(Math.Round(p.Precio / Convert.ToDecimal(DolarHoy.Promedio), 2))$</div>
+
+                                </div>
+                                <div class="package-status status-available">@p.Cupos_Disponibles cupos</div>
+                            </div>
+
+                            <div class="package-footer">
+                                <div class="package-actions">
+                                </div>
+                                <button @onclick="@(() => Reservar(p))" class="btn btn-success btn-sm">
+                                    <i class="fi fi-rr-shopping-cart"></i> Reservar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+
+                <div class="no-element">
+                    <img src="/imgs/tiempo-de-fuego.gif" alt="Alternate Text" />
+                    <h4>Actualmente no hay ofertas disponibles</h4>
+                </div>
+            }
+        </div>
+
+
+
+
+    </div>
+</section>
+
+<AuthorizeView>
+    <Authorized>
+		<Modal Displayed="MReservar" DisplayedChanged="@(()=>{MReservar = false; CurrentRes = new ReservaPaquete(); urlImagen="";})">
+			<div class="modal-paquete">
+				<div class="package-info">
+					<div class="package-card">
+
+						<div class="package-header">
+							<img src="@CurrentPack.GetImageUrl()" alt="Santorini" class="package-image">
+							<div class="package-destination">
+								<h3>@destinos.Find(e => e.Id_destino == CurrentPack.Destino).Nombre_destino</h3>
+								<p><i class="fi fi-ss-marker"></i> @CurrentPack.Nombre_paquete</p>
+							</div>
+						</div>
+
+						<div class="package-content">
+							<div class="package-details">
+
+								<div class="detail-item">
+									<div class="detail-icon">
+										<i class="fi fi-sr-plane-alt"></i>
+									</div>
+									<div class="detail-info">
+										<h4>Vuelo incluido</h4>
+										<p>En cualquiera de nuestras aerolineas</p>
+									</div>
+								</div>
+								@if (CurrentPack.Hospedaje)
+								{
+									<div class="detail-item">
+										<div class="detail-icon">
+											<i class="fi fi-rr-hotel"></i>
+										</div>
+										<div class="detail-info">
+											<h4>Hospedaje</h4>
+											<p>Incluido</p>
+										</div>
+									</div>
+								}
+
+								@if (CurrentPack.Comida)
+								{
+									<div class="detail-item">
+										<div class="detail-icon">
+											<i class="fi fi-rr-plate-utensils"></i>
+										</div>
+										<div class="detail-info">
+											<h4>Alimentación</h4>
+											<p>Todas las comidas incluidas</p>
+										</div>
+									</div>
+
+								}
+
+								<div class="detail-item">
+									<div class="detail-icon">
+										<i class="fi fi-rr-calendar-clock"></i>
+									</div>
+									<div class="detail-info">
+										<h4>Salida</h4>
+										<p>@CurrentPack.Fecha_salida.ToShortDateString()</p>
+									</div>
+								</div>
+							</div>
+							<InfoC Title="Información"><p>@CurrentPack.Detalles</p></InfoC>
+							<div class="package-pricing">
+								<div>
+									<div class="package-price">@CurrentPack.Precio Bs<span>/persona</span></div>
+									<div class="package-price">@(Math.Round(CurrentPack.Precio / Convert.ToDecimal(DolarHoy.Promedio), 2))$</div>
+
+								</div>
+								<div class="package-status status-available">@CurrentPack.Cupos_Disponibles cupos</div>
+							</div>
+
+							<div class="package-footer">
+								<div class="package-actions">
+								</div>
+							</div>
+						</div>
+					</div>
+                    <p class="dolar-b">Total:@(CurrentPack.Precio* CurrentRes.Personas)Bs/@(Math.Round(CurrentPack.Precio * CurrentRes.Personas / Convert.ToDecimal(DolarHoy.Promedio), 2))$</p>
+				</div>
+				<div class="modal-res-paquete">
+					<form @onsubmit="@(() => GuardarReserva())">
+						<h3>Detalles de reserva</h3>
+						<div class="input-field">
+							<label>Personas</label>
+							<input min="1" @bind="CurrentRes.Personas" type="number" max="@CurrentPack.Cupos_Disponibles" />
+						</div>
+						<div class="input-field">
+							<label>Método de pago</label>
+							<select @bind="CurrentRes.Metodo_pago">
+								<option value="PAGO_MOVIL">Pago Móvil</option>
+								<option value="DEPOSITO">Depósito</option>
+								<option value="TRANSFERENCIA">Transferencia</option>
+							</select>
+						</div>
+						@if (CurrentRes.Metodo_pago == "DEPOSITO" || CurrentRes.Metodo_pago == "TRANSFERENCIA")
+						{
+							<div class="info-pago">
+								<p>Banco de Venezuela</p>
+								<p>Cuenta: 01020668540000290564</p>
+								<p>V-30283225</p>
+								<p>@(CurrentRes.Metodo_pago == "TRANSFERENCIA" ? "Beneficiario: Diego Gómez" : "")</p>
+							</div>
+						}
+						else
+						{
+							<div class="info-pago qr">
+								<img src="/imgs/qr.jpg" alt="" />
+							</div>
+						}
+
+
+						<div class="input-field">
+							<input required pattern="^[0-9]+$" @bind="CurrentRes.Numero_comprobante" type="text" placeholder="00000000" maxlength="8" />
+						</div>
+						<div class="input-field">
+							<label>Comprobante</label>
+                            <InputFile required  OnChange="HandleImage" id="inputFile" accept="image/png, image/jpeg"></InputFile>
+						</div>
+
+                        <div class="preview">
+                            <div class="img-upload-container">
+                                <img src="@urlImagen" alt="" />
+                            </div>
+                        </div>
+
+						<div class="buttons">
+							<button @onclick="@(()=>{MReservar = false; CurrentRes = new ReservaPaquete(); urlImagen="";})" type="reset" class="botn cancel expand">Cancelar</button>
+							<button type="submit" class="botn expand">Reservar</button>
+						</div>
+					</form>
+
+				</div>
+			</div>
+		</Modal>
+    </Authorized>
+    <NotAuthorized>
+        <Modal Displayed="MReservar" DisplayedChanged="@(() => MReservar = false)">
+            <div class="inicia-sesion">
+                <h3>Debes iniciar sesión para reservar un vuelo</h3>
+                <img src="/imgs/acceso.gif" />
+                <a class="btn-iniciar" href="/login">Inicia Sesión</a>
+            </div>
+        </Modal>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    public List<Paquete> paquetes = new List<Paquete>();
+    public List<Destino> destinos = new List<Destino>();
+    public Paquete CurrentPack = new Paquete();
+    public ReservaPaquete CurrentRes = new ReservaPaquete();
+    public IJSObjectReference jsModule;
+    Dolar DolarHoy = new Dolar();
+
+    public bool MReservar { get; set; } = false;
+    public string? urlImagen { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        FbConnection conn = await databaseConnection.GetConnectionAsync();
+        paquetes = (await conn.QueryAsync<Paquete>("SELECT * FROM PAQUETES WHERE CUPOS_DISPONIBLES > 0")).ToList();
+        destinos = (await conn.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+        jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "/app.js");
+        DolarHoy = await dolarService.GetDolarAsync();
+    }
+
+    public async Task Reservar(Paquete p)
+    {
+        CurrentPack = p;
+        MReservar = true;
+    }
+
+    public async Task GuardarReserva()
+    {
+        try
+        {
+            var autenticationState = await authenticationStateTask!;
+            foreach (var c in autenticationState.User.Claims)
+            {
+                if (c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid")
+                {
+                    CurrentRes.Id_user = int.Parse(c.Value);
+                }
+
+            }
+            CurrentRes.Id_paquete = CurrentPack.Id_Paquete;
+            CurrentRes.Monto_total = CurrentRes.Personas * CurrentPack.Precio;
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            await conn.ExecuteAsync(@"INSERT INTO RESERVA_PAQUETES( ID_USER, ID_PAQUETE, MONTO_TOTAL, METODO_PAGO, NUMERO_COMPROBANTE,
+                                        IMAGEN, FORMATO_IMAGEN, PERSONAS) VALUES (@ID_USER, @ID_PAQUETE, @MONTO_TOTAL, @METODO_PAGO,
+                                        @NUMERO_COMPROBANTE, @IMAGEN, @FORMATO_IMAGEN, @PERSONAS)", CurrentRes);
+            await conn.ExecuteAsync(@"UPDATE PAQUETES SET CUPOS_DISPONIBLES = CUPOS_DISPONIBLES - @Personas WHERE ID_PAQUETE = @Id_paquete", new{Personas = CurrentRes.Personas, Id_paquete = CurrentPack.Id_Paquete});
+            await JS.InvokeVoidAsync("alert", $"Su reserva ha sido guardada con exito");
+            CurrentRes = new ReservaPaquete();
+            CurrentPack = new Paquete();
+            paquetes = (await conn.QueryAsync<Paquete>("SELECT * FROM PAQUETES WHERE CUPOS_DISPONIBLES > 0")).ToList();
+            urlImagen = "";
+            MReservar = false;
+
+        
+        }
+        catch(Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+      
+    }
+
+    private async Task ClearInputFile()
+    {
+
+        await jsModule.InvokeVoidAsync("clearFileInput");
+
+    }
+
+
+
+    private async Task HandleImage(InputFileChangeEventArgs e)
+    {
+        if (e.File.Size > 1024 * 1024)
+        {
+            await ClearInputFile();
+            await JS.InvokeVoidAsync("alert", "El tamaño de la imagen no puede ser superior a 1MB");
+            urlImagen = "";
+            return;
+
+        }
+
+        try
+        {
+            var archivo = e.File;
+            archivo = await archivo.RequestImageFileAsync(archivo.ContentType, 340, 340);
+            var buffer = new byte[archivo.Size];
+            await archivo.OpenReadStream(1024000).ReadAsync(buffer);
+            urlImagen = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            CurrentRes.Imagen = buffer;
+            CurrentRes.Formato_imagen = archivo.ContentType;
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"error: {ex.Message}");
+            await jsModule.InvokeVoidAsync("clearFileInput");
+        }
+
+        StateHasChanged();
+    }
+
+}

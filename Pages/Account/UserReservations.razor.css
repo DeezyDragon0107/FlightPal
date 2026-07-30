@@ -1,0 +1,126 @@
+﻿.reservations {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    background-color: #DFE2E7;
+}
+
+.tabs {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    flex-wrap: wrap;
+    flex-direction: row;
+    font-family: Montserrat;
+}
+
+    .tabs label {
+        background-color: #DFE2E7 ;
+        padding: 1rem;
+        transition: background-color .5s ease;
+    }
+
+    .tabs .contenido {
+        background-color: white;
+        padding: 1rem;
+        width: 100%;
+        order: 1;
+        display: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1rem;
+        border-radius: 0 .8rem .8rem .8rem;
+        justify-content: space-around;
+    }
+
+    .tabs input[type='radio'] {
+        display: none;
+    }
+
+        .tabs input[type='radio']:checked + label + .contenido {
+            display: flex;
+        }
+
+
+
+        .tabs input[type='radio']:checked + label {
+            background-color: white;
+        }
+
+
+
+
+.flight-table-container {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    padding: 1rem;
+    overflow: hidden;
+    gap: 1rem;
+}
+
+.table-inner {
+    overflow-x: auto;
+    border-radius: .8rem;
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.flight-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .flight-table thead {
+        background: linear-gradient(90deg, #4361EE, #47509E);
+        color: white;
+    }
+
+    .flight-table th {
+        padding: 18px 20px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+
+    .flight-table tbody tr {
+        border-bottom: 1px solid #e0e0e0;
+        transition: background 0.2s ease;
+    }
+
+        .flight-table tbody tr:hover {
+            background: rgba(58, 134, 255, 0.03);
+        }
+
+    .flight-table td {
+        padding: 18px 20px;
+        color: #1a1a2e;
+        vertical-align: middle;
+    }
+
+
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: rgba(56, 176, 0, 0.1);
+    color: var(--success-color);
+}
+
+.status-inactive {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.status-pending {
+    background: rgba(255, 158, 0, 0.1);
+    color: #ef476f;
+}

@@ -1,0 +1,142 @@
+﻿@page "/admin/notices"
+@layout Dashboard
+@attribute [Authorize(Roles = "ADMIN")]
+@inject IJSRuntime JS
+@inject IDatabaseConnection databaseConnection
+@* @inject IJSObjectReference jsModule *@
+<PageTitle>Avisos</PageTitle>
+
+
+<section class="notices-section">
+
+	<div class="title-section">
+		<div class="title-text">
+			<h2>Avisos Administrativos</h2>
+			<p>Gestión de avisos para usuarios y personal</p>
+		</div>
+		<div class="image-title">
+		</div>
+	</div>
+
+	<div class="post-container">
+		<form @onsubmit="SavePost">
+			<div class="post">
+				<div class="post-new">
+					<div>
+						<i class="fi fi-br-attribution-pencil"></i> Crear Publicación
+					</div>
+					<button type="submit" class="button-add">Publicar </button>
+
+				</div>
+				<div class="post-area-title">
+					<i class="fi fi-rr-text"></i> Título
+				</div>
+				<div class="input-field">
+					<input @bind="post.Titulo" required class="post-title" type="text" placeholder="Escribe el título de la publicación..." maxlength="100" />
+				</div>
+
+				<div class="post-area-title">
+					<i class="fi fi-rr-browser"></i> Contenido
+				</div>
+				<div class="toolbar">
+					<button type="button" @onclick="@(() => Command("bold"))">
+						<i class="fi fi-rr-bold"></i>
+					</button>
+					<button type="button" @onclick="@(() => Command("italic"))">
+						<i><i class="fi fi-br-italic"></i></i>
+					</button>
+					<button type="button" @onclick="@(() => Command("underline"))">
+						<i><i class="fi fi-br-underline"></i></i>
+					</button>
+					<button type="button" @onclick="@(() => Command("strikethrough"))">
+						<i><i class="fi fi-br-strikethrough"></i></i>
+					</button>
+					<button type="button" @onclick="@(() => Command("insertUnorderedList"))">
+						<i><i class="fi fi-br-list"></i></i>
+					</button>
+				</div>
+
+				<div id="post-area" class="post-content" maxlenght="200" @onfocusout="HandleContent" contenteditable="true">
+				</div>
+
+				<div class="input-group">
+					<div class="input-field expanded">
+						<label><i class="fi fi-rr-add-image"></i> Imagen</label>
+						<input type="url" placeholder="URL de imagen" maxlength="200" />
+					</div>
+					<div class="input-field expanded">
+						<label><i class="fi fi-sr-tags"></i>Categoría</label>
+						<select>
+							<option value="NOTICIA">Noticia</option>
+							<option value="COMUNICADO">Comunicado</option>
+							<option value="PROMOCION">Promoción</option>
+						</select>
+					</div>
+				</div>
+			</div>
+		</form>
+		
+	</div>
+	<div class="post-container">
+		<h4>Publicaciones</h4>
+	</div>
+	<div class="posts-container">
+		@if (posts.Any())
+		{
+			foreach(var p in posts)
+			{
+				<PostPreview Publi="@p" MaxW="450px"></PostPreview>
+			}
+		}
+	</div>
+	
+
+</section>
+@code {
+	public string texto { get; set; } = "";
+	public Publicacion post = new Publicacion();
+	public List<Publicacion> posts = new List<Publicacion>();
+
+	IJSObjectReference jsModule;
+	protected override async Task OnInitializedAsync()
+	{
+		FbConnection conn = await databaseConnection.GetConnectionAsync();
+		posts = (await conn.QueryAsync<Publicacion>("SELECT * FROM POSTS")).ToList();
+		jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "/app.js");
+	}
+	private async Task GetSelection()
+	{
+		var selectedText = await jsModule.InvokeAsync<string>("getSelectedText");
+		texto = selectedText;
+		Console.WriteLine(selectedText);
+		Console.WriteLine(await jsModule.InvokeAsync<string>("getText"));
+	}
+	private async Task HandleContent()
+	{
+		post.Contenido = await jsModule.InvokeAsync<string>("getText");
+		if (post.Contenido.Length >= 2000)
+		{
+			await JS.InvokeVoidAsync("alert", "Haz alcanzado el maximo tamaño de contenido");
+			await jsModule.InvokeVoidAsync("setText", post.Contenido.Substring(0, 1998));
+			post.Contenido = post.Contenido.Substring(0, 1998);
+		}
+	}
+	private async Task Command(string cmd)
+	{
+		await jsModule.InvokeVoidAsync("comText", cmd);
+
+	}
+
+	private async Task SavePost()
+	{
+		if(string.IsNullOrWhiteSpace(post.Contenido) || string.IsNullOrEmpty(post.Contenido))
+		{
+			await JS.InvokeVoidAsync("alert", "El contenido no puede estar vacío");
+		}
+		FbConnection conn = await databaseConnection.GetConnectionAsync();
+		await conn.ExecuteAsync("INSERT INTO POSTS(TITULO,CONTENIDO,IMAGEN_URL, CATEGORIA) VALUES (@Titulo,@Contenido,@Imagen_url,@Categoria);", post);
+		post = new Publicacion();
+		posts = (await conn.QueryAsync<Publicacion>("SELECT * FROM POSTS")).ToList();
+		await jsModule.InvokeVoidAsync("setText", "");
+	}
+}

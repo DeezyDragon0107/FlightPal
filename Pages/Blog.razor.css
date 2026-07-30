@@ -1,0 +1,266 @@
+﻿.blog-container {
+    display: flex;
+    flex-direction: column;
+    font-family: Montserrat;
+    gap: 1rem;
+    padding: 1rem;
+    align-items: center;
+    width: 100%;
+    background-color: #EEF2F5;
+}
+
+.blog {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #EEF2F5;
+}
+
+
+.post-section {
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    font-family: Montserrat;
+    width: 80%;
+    background-color: #EEF2F5;
+}
+
+    .post-section h2 {
+        font-size: clamp(1rem, 4vw, 2rem);
+    }
+
+    .post-section p{
+        margin-bottom: 4rem;
+    }
+
+.social-media {
+    display: flex;
+    flex-direction: column;
+    border-radius: .7rem;
+    gap: 1rem;
+}
+
+.interesting {
+    justify-content: center;
+    text-align: center;
+    padding: 1rem;
+    font-family: Montserrat;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.interesting h2{
+    margin-top: 1rem;
+    
+
+   
+}
+
+.social-network {
+    text-align: center;
+    font-family: Montserrat;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    justify-content: center;
+}
+
+.topic{
+    overflow: hidden;
+    border-radius: .8rem;
+    width: 100%;
+    aspect-ratio: 1/0.5;
+    max-width: 400px;
+    position: relative;
+    color: white;
+    
+}
+
+.topic img{
+    width: 100%;
+    object-fit: cover;
+    transition: transform .5s ease, filter 1s ease;
+
+}
+
+.topic .texto-topic{
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+   text-decoration: none;
+   color: white;
+    width: 100%;
+    height: 100%;
+    top: 100%;
+    transition: transform .5s ease;
+    border-radius: 1rem;
+}
+
+
+
+.topic:hover .texto-topic{
+    transform: translateY(-100%);
+}
+
+.topic:hover img{
+    transform: scale(1.2);
+    filter: blur(5px);
+}
+
+@media(min-width: 1024px){
+    .blog-container{
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    .social-media{
+        position: sticky;
+        top: 3.25rem;
+    }
+
+    .post-section{
+        margin-left: 10rem;
+        width: auto;
+    }
+}
+
+
+
+
+
+.sidebar-widget {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.widget-title {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid #e9ecef;
+    color: var(--dark);
+}
+
+.topic-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    transition: all .3s ease;
+}
+
+    .topic-card:hover {
+        transform: translateX(5px);
+    }
+
+    .topic-card:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+.topic-image {
+    width: 80px;
+    height: 80px;
+    border-radius: .5rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+    .topic-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.topic-content h4 {
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+    line-height: 1.4;
+}
+
+.topic-content a {
+    color: #1F2937;
+    text-decoration: none;
+    transition: all ease .3s;
+}
+
+    .topic-content a:hover {
+        color: #4361EE;
+    }
+
+
+
+.title-section {
+    display: flex;
+    margin: 0 1rem;
+    flex-direction: row;
+    gap: 1rem;
+    background-color: white;
+    border-radius: .8rem;
+    color: #1e293b;
+    align-items: center;
+    max-height: 128px;
+    justify-content: space-between;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+    .title-section h2 {
+    }
+
+    .title-section p {
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+
+
+.title-text {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+    .title-text h2 {
+    }
+
+    .title-text p {
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+
+.image-title {
+    display: flex;
+    height: 100%;
+    width: 50%;
+    overflow: hidden;
+    border-radius: .5rem;
+    background-image: url('/imgs/paquetes.JPG');
+    background-size: cover;
+    mask-image: linear-gradient(to left, black, transparent);
+    min-height: 128px;
+}
+
+.social-links{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    gap: 1rem;
+}
+
+.social-icon img{
+    width: 42px;
+    height: 42px;
+}

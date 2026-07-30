@@ -1,0 +1,297 @@
+﻿@page "/sign-up"
+@layout NoLayout
+
+@inject HttpClient httpClient
+@inject NavigationManager navigation
+@inject AuthService authService
+@inject AuthenticationStateProvider authStateProvider
+@inject IDatabaseConnection DatabaseConnection
+@inject IHttpContextAccessor HttpContextAccessor
+
+
+@using System.Text.RegularExpressions
+@using BCrypt.Net
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication.Cookies
+
+<PageTitle>Registrate en FlightPal</PageTitle>
+<main class="sign-up-page">
+	<a class="return" href="login"><i class="fi fi-rr-arrow-small-left"></i></a>
+
+	<div class="form-modal">
+		<div class="form-container @(move ? "retraido" : "")" style="">
+			<img />
+			<h2>Crea una cuenta</h2>
+			<img @onclick="CambiarImagen" class="avatar" src="/imgs/Avatars/@NumeroImagen" alt="avatar" />
+
+			<form @onsubmit="ValidateUserPassword">
+				<div class="input-group">
+					
+					<input required name="email" maxlength="30" @bind="model.Email" type="email" placeholder="alguien@example.com"  />
+				</div>
+				<div class="input-group">
+					<input maxlength="30" required class="@(ValidPassword.Key?"valid":"")"  @onfocusout="ValidatePassword" placeholder="Contraseña" type="password" @bind="model.Password" />
+					<p class="error-message">@((!ValidPassword.Key && ValidPassword.Value != "") ? $"{ValidPassword.Value}" : "")</p>
+				</div>
+				<div class="input-group">
+					<input required @bind="model.ConfirmPassword" placeholder="Confirmar Contraseña" disabled="@(ValidPassword.Key?false:true)" type ="password"  />
+				</div>
+
+				<div class="input-group check">
+					<input type="checkbox" value="" @bind="Terms" />
+					<label>Al continuar usted acepta nuestro acuerdo de <a href="terms">Terminos y condiciones</a> </label>
+				</div>
+				<button type="submit" disabled="@(!Terms)" class="form-button">Registrarse</button>
+			</form>
+
+			
+
+			
+
+		</div>
+
+
+		<div class="img-container" >
+			<i style="@(move ? "opacity: 1;":"")" @onclick="Mover" @(move?"":"disable") class="fi fi-br-angle-left"></i>
+
+		</div>
+
+		<div class="info-user @(move?"":"retraido")" style="flex-direction: column;">
+			<img src="/imgs/FlightPalLogoPIso.png" alt="Alternate Text" />
+			<EditForm b-9uaj3kh1xd Model="model" OnValidSubmit="Registrar" FormName="Registrar">
+				<h2>Solo un paso más</h2>
+				<h4>Datos personales</h4>
+				<DataAnnotationsValidator />
+				<ValidationSummary />
+				<div class="input-group double">
+					<InputText class="input-g" placeholder="Nombre" @bind-value="model.Name"></InputText>
+					
+					<InputText class="input-g" placeholder="Apellido" @bind-value="model.LastName"></InputText>
+					
+				</div>
+				<div class="input-group double">
+					<InputDate class="input-g" @bind-Value="model.BirthDate"></InputDate>
+				</div>
+				<div class="input-group double">
+					<select @bind="model.Country">
+						<option selected value="V">V -</option>
+						<option value="E">E -</option>
+					</select>
+					<InputNumber class="input-g" placeholder="Documento de indentidad" @bind-Value="model.Dni"> </InputNumber>
+				</div>
+
+				<div class="input-group">
+					<InputText placeholder="Telefono" class="input-g" @bind-Value="model.CellPhone"></InputText>
+					
+				</div>
+				<div class="input-group">
+					<InputText class="input-g"  @bind-Value="model.Address" placeholder="Dirección"></InputText>
+				</div>
+				<button  class="form-button" type="submit">Registrarse</button>
+			</EditForm>
+			
+		</div>
+		
+		
+
+	</div>
+	
+</main>
+
+<Modal Displayed="Modal" DisplayedChanged="OcultarModal">
+	@Mensaje
+</Modal>
+@code{
+	[SupplyParameterFromForm]
+	SignUpViewModel model { get; set; } = new SignUpViewModel(){BirthDate=DateOnly.FromDateTime(DateTime.Now - TimeSpan.FromDays(18*365)), Country = 'V'};
+	public string NumeroImagen { get; set; } = "1.png";
+	public bool move { get; set; } = false;
+	public bool Terms { get; set; } = false;
+
+	public string? Mensaje { get; set; }
+	public bool Modal { get; set; } = false;
+	public KeyValuePair<bool, string> ValidPassword { get; set; } = new KeyValuePair<bool, string>(false, "");
+
+	public async Task ValidateUserPassword()
+	{
+		Regex pattern = new Regex(@"^((?!\.)[\w\-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])");
+		MatchCollection matchCollection = pattern.Matches(model.Email!);
+
+		if (matchCollection.Count==0)
+		{
+			await ShowModal("Por favor ingrese un correo electrónico válido.");
+			return;
+		}
+		if (!ValidPassword.Key)
+		{
+			await ShowModal("Por favor ingrese una contraseña válida.");
+			return;
+		}
+		if (model.ConfirmPassword != model.Password)
+		{
+			await ShowModal("Las contraseñas son diferentes.");
+			return;
+		}
+
+
+
+		bool existe = await authService.VerifyIfUserExists(model.Email.ToUpper());
+		if (!existe)
+		{
+			move = !move;
+			return;
+		}
+		await ShowModal("El correo electrónico ya está en uso. Por favor, utilice otro correo.");
+
+
+	}
+
+	private async Task CambiarImagen()
+	{
+		Random random = new Random();
+		NumeroImagen = $"{random.Next(1, 19)}.png";
+	}
+	private async Task ShowModal(string message)
+	{
+		Mensaje = message;	
+		Modal = true;
+		StateHasChanged();
+	}
+
+	private async Task<bool> OcultarModal()
+	{
+		Modal = false;
+		StateHasChanged();
+		return Modal;
+	}
+
+	private async Task Mover(MouseEventArgs args)
+	{
+		move = !move;
+	}
+
+	private async Task ValidatePassword()
+	{
+		if (string.IsNullOrEmpty(model.Password) || string.IsNullOrWhiteSpace(model.Password))
+		{
+			ValidPassword = new KeyValuePair<bool, string>(false, "La contraseña no puede estar vacía.");
+			return;
+
+		}
+		Regex pattern = new Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&#.$($)$-$_])[A-Za-z\d$@$!%*?&#.$($)$-$_]{8,15}$");
+		MatchCollection matchCollection = pattern.Matches(model.Password);
+		if (matchCollection.Count == 0)
+		{
+			ValidPassword = new KeyValuePair<bool, string>(false, "La contraseña debe tener entre 8 y 15 caracteres, al menos una letra mayúscula, una letra minúscula, un número y un carácter especial.");
+			StateHasChanged();
+			return;
+		}
+		else
+		{
+			ValidPassword = new KeyValuePair<bool, string>(true, "");
+		}
+	}
+
+
+	private async Task Registrar(EditContext args)
+	{
+		bool existe = await authService.VerifyIfUserExists(model.Dni.ToString());
+		if (existe)
+		{
+			await ShowModal("Este número de identificación ya se encuentra registrado");
+			return;
+		}
+		try
+		{
+			string passwordHash = BCrypt.EnhancedHashPassword(model.Password);
+			var sql = "INSERT INTO USERS(NOMBRE, APELLIDO, EMAIL, PASSWORD, DNI, NACIONALIDAD, ROLE) VALUES(@Nombre, @Apellido, @Email, @Password, @Dni, @Nacionalidad, @Role)";
+			FbConnection conn =  await DatabaseConnection.GetConnectionAsync();
+			int result = conn.Execute(sql, new { Nombre = model.Name, Apellido = model.LastName, Email = model.Email.ToUpper(), Password = passwordHash, Dni = model.Dni, Nacionalidad = model.Country, Role = "USER" });
+			if (result > 0)
+			{
+				Users user = await conn.QueryFirstAsync<Users>($"SELECT * FROM USERS WHERE EMAIL = @Email", new{Email = model.Email.ToUpper()});
+
+				await CreateAuthCookie(user);
+				await UpdateBlazorAuthState(user);
+				navigation.NavigateTo("/");
+
+
+			}
+			else
+			{
+				await ShowModal("Ocurrio un error durante la creación de su usuario, por favor reintente más tarde");
+			}
+
+		}catch(Exception ex)
+		{
+			Console.WriteLine(ex.Message);
+		}
+		Console.WriteLine($"{model.Name} {model.LastName} {model.BirthDate} {model.Country}-{model.Dni} {model.Address} {model.CellPhone} {model.Email} {model.Password}");
+	}
+
+
+	private async Task CreateAuthCookie(Users user)
+	{
+		try
+		{
+			var httpContext = HttpContextAccessor.HttpContext;
+			if (httpContext != null)
+			{
+				var claims = new List<Claim>
+				{
+					new Claim(ClaimTypes.Sid, user.Id_user.ToString()),
+					new Claim(ClaimTypes.Email, user.Email),
+					new Claim(ClaimTypes.Name, $"{user.Nombre} {user.Apellido}"),
+					new Claim(ClaimTypes.Role, user.Role)
+
+				};
+
+				var identity = new ClaimsIdentity(claims,
+					CookieAuthenticationDefaults.AuthenticationScheme);
+				var principal = new ClaimsPrincipal(identity);
+
+
+				await httpContext.SignInAsync(
+					CookieAuthenticationDefaults.AuthenticationScheme,
+					principal,
+					new AuthenticationProperties
+					{
+						IsPersistent = true,
+						ExpiresUtc = DateTime.UtcNow.AddHours(2)
+					});
+
+				Console.WriteLine("Cookie de autenticación creada");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error creando cookie: {ex.Message}");
+		}
+	}
+
+
+	private async Task UpdateBlazorAuthState(Users user)
+	{
+		try
+		{
+			var customProvider = (CustomAuthStateProvider)authStateProvider;
+			if (customProvider != null)
+			{
+				var httpContext = HttpContextAccessor.HttpContext;
+
+				await customProvider.UpdateAuthenticationState(
+					user,
+					httpContext);
+
+				Console.WriteLine("Estado de Blazor actualizado");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error actualizando estado Blazor: {ex.Message}");
+		}
+	}
+	
+
+
+}

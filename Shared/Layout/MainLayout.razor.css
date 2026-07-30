@@ -1,0 +1,126 @@
+
+#blazor-error-ui {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+
+.nav-bar {
+    display: flex;
+    position: sticky;
+    top: 0;
+    /* background-color: #202447;*/
+    background-image: linear-gradient(to bottom right, #353B75, #202447);
+    gap: 10px;
+    flex-direction: row;
+    margin: 0px;
+    padding: 10px 30px;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+   
+}
+
+.img-section {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: .5rem;
+    font-family: Montserrat;
+    color: white;
+}
+.img-section img{
+    height: 2rem;
+}
+
+.nav-section {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+    align-items: center;
+}
+
+.nav-section a{
+        font-size: 14pt;
+        color: white;
+        text-decoration: none;
+        font-family: Roboto;
+ }
+
+
+::deep .activo {
+    color: #4A99B2 !important;
+}
+
+footer {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1rem;
+    background-color: #15182F;
+    color: white;
+    font-family: Montserrat;
+    justify-content: center;
+
+
+}
+
+footer a{
+    text-decoration: none;
+    color: inherit;
+    font-size: .6rem;
+    cursor: pointer;
+}
+
+    footer a:hover {
+        color: #6379C2;
+    }
+
+.isologo {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.social-section {
+    text-align: center;
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+.social-section h5{
+    font-weight: 400;
+}
+
+
+.social-media {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: .7rem;
+}
+
+.social-media i{
+    font-size: 1rem;
+}
+
+@media (min-width: 768px){
+
+
+}

@@ -1,0 +1,418 @@
+﻿@page "/admin/reports"
+@layout Dashboard
+@inject NavigationManager navManager
+@inject IJSRuntime JS
+@inject IDatabaseConnection databaseConnection
+@attribute [Authorize(Roles ="ADMIN")]
+@using ApexCharts
+<PageTitle>Reportes</PageTitle>
+<style>
+	
+</style>
+<section class="reports-section">
+
+	    <div class="tabs">
+
+			<input type="radio" name="clase" checked="checked" id="Economica" value="1" />
+			<label for="Economica">Gestión</label>
+			<div class="contenido">
+			<div class="report-container">
+				<div @ref="contentToPrint" class="content-print">
+					<header class="report-header">
+						<div class="img-header">
+							<img src="imgs/FlightPalLogoPIso.png" alt="" />
+							<p>Soluciones innovadoras en viajes</p>
+							<p><i class="fi fi-ss-marker"></i> La Asunción, Nueva Esparta, Venezuela</p>
+							<p><i class="fi fi-sr-phone-call"></i> +58 426-986-2019  <i class="fi fi-sr-envelope-open-text"></i>FlightPal@travels.com</p>
+						</div>
+
+						<div class="text-header">
+							<h2>Reporte de gestión</h2>
+							<p>Analisis de rendimiento de la plataforma</p>
+							<p>Generado el: @(DateTime.Now.ToString("dd/MM/yyyy hh:mm tt"))</p>
+							<p>Número de reporte: -</p>
+						</div>
+					</header>
+					<h3 style="text-align: center; margin-top: 1rem;">Resumen</h3>
+					<div class="report-content">
+						<div class="cards-container">
+							<StatCard Nombre="Nuevos usuarios" IconColor="#4361EE" Color="rgba(58, 134, 255, 0.1)" Numero="@Stats[1]"><i class="fi fi-sr-users-alt"></i></StatCard>
+							<StatCard Nombre="Vuelos realizados" IconColor="#38B000" Color="#38B00020" Numero="@Stats[2]"><i class="fi fi-sr-plane-alt"></i></StatCard>
+							<StatCard Nombre="Nuevos Paquetes" IconColor="#F59E0B" Color="#F59E0B20" Numero="@Stats[3]"><i class="fi fi-sr-dolly-flatbed-alt"></i></StatCard>
+						</div>
+
+					</div>
+					<h3 style="text-align: center; margin-top: 1rem;">Reservaciones</h3>
+					<div class="report-content">
+						<div class="cards-container">
+							<StatCard IconColor="#162653" Color="#193B8920" Nombre="Reservas de vuelo" Numero="@Stats[5]"><i class="fi fi-sr-plane-tail"></i></StatCard>
+							<StatCard IconColor="#162653" Color="#193B8920" Nombre="Boletos generados" Numero="@Stats[0]"><i class="fi fi-sr-ticket-airline"></i></StatCard>
+							<StatCard IconColor="#162653" Color="#193B8920" Nombre="Reservas de paquetes" Numero="@Stats[4]"><i class="fi fi-sr-box-circle-check"></i></StatCard>
+						</div>
+
+					</div>
+					<h4>Registro de usuarios Total:                   @Stats[1]</h4>
+					<div class="chart-container">
+						<ApexChart @key="chartKey3" TItem="UsuariosMes">
+							<ApexPointSeries TItem="UsuariosMes"
+											 Items="ejemplos"
+											 SeriesType="SeriesType.Area"
+											 XValue="@(e => e.Dias)"
+											 YValue="@(e => e.Total)"
+											 OrderBy="e=>e.X"
+											></ApexPointSeries>
+						</ApexChart>
+					</div>
+					<h4>Paquetes más solicitados</h4>
+					<div class="flight-table-container modal">
+						<div class="table-inner">
+							<table class="flight-table">
+									<thead>
+										<tr>
+											<th>Paquete</th>
+											<th>Fecha de salida</th>
+											<th>Cupos disponibles</th>		
+											<th>Reservas</th>
+										</tr>
+									</thead>
+								<tbody>
+									@if (paquetes.Any())
+									{
+										foreach(var p in paquetes)
+										{
+											<tr>
+												<td>@p.Nombre_paquete</td>
+												<td>@p.Fecha_salida</td>
+												<td>@p.Cupos_disponibles</td>
+												<td>@p.Total</td>
+											</tr>
+										}
+									}
+
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<h4>Reservaciones recientes</h4>
+					<div class="flight-table-container modal">
+						<div class="table-inner">
+							<table class="flight-table">
+								<thead>
+									<tr>
+										<th>Cliente</th>
+										<th>DNI</th>
+										<th>Fecha</th>
+										<th>Estado</th>
+									</tr>
+								</thead>
+								<tbody>
+									@if (reservas.Any())
+									{
+										foreach (var ur in reservas)
+										{
+											<tr>
+												<td>@ur.Nombre @ur.Apellido</td>
+												<td>
+													@ur.Dni
+												</td>
+												<td>
+													@ur.Fecha_reserva
+												</td>
+												<td><span class="status-badge @(ur.Estado == "APROBADO" ? "status-active" : "") @(ur.Estado == "PENDIENTE" ? "status-pending" : "") ">@ur.Estado</span></td>
+											</tr>
+
+										}
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+
+				</div>
+			</div>
+			<div class="panel">
+				<button class="panel-btn" @onclick="Descargar">
+					Descargar pdf
+				</button>
+			</div>
+			</div>
+
+
+		<input type="radio" name="clase"  id="des" value="1" />
+		<label for="des">Desempeño</label>
+		<div class="contenido">
+			<div class="report-container">
+				<div  class="content-print" @ref="content2">
+					<header class="report-header">
+						<div class="img-header">
+							<img src="imgs/FlightPalLogoPIso.png" alt="" />
+							<p>Soluciones innovadoras en viajes</p>
+							<p><i class="fi fi-ss-marker"></i> La Asunción, Nueva Esparta, Venezuela</p>
+							<p><i class="fi fi-sr-phone-call"></i> +58 426-986-2019  <i class="fi fi-sr-envelope-open-text"></i>FlightPal@travels.com</p>
+						</div>
+
+						<div class="text-header">
+							<h2>Reporte de Desempeño</h2>
+							<p>Analisis de rendimiento de la plataforma</p>
+							<p>Generado el: @(DateTime.Now.ToString("dd/MM/yyyy hh:mm tt"))</p>
+							<p>Número de reporte: -</p>
+						</div>
+					</header>
+					<h3 style="text-align: center; margin-top: 1rem;">Resumen</h3>
+					<div class="report-content">
+						<div class="cards-container">
+							<StatCard FontMin Nombre="Ingresos"  IconColor="#38B000" Color="#38B00020" Numero="@(Total_ventas.ToString() + "Bs.")"><i class="fi fi-rs-coins"></i></StatCard>
+							<StatCard Nombre="Ocupación" IconColor="#4361EE" Color="rgba(58, 134, 255, 0.1)" Numero="@Ocupacion.ToString()"><i class="fi fi-sr-seat-airline"></i></StatCard>
+							<StatCard Nombre="Retención" IconColor="#F59E0B" Color="#F59E0B20" Numero="@Retencion.ToString()"><i class="fi fi-sr-dolly-flatbed-alt"></i></StatCard>
+						</div>
+
+					</div>
+
+					<h4>Ventas de boletos por aerolinea</h4>
+					<div class="chart-container">
+						<ApexChart @key="chartKey4" TItem="MostAirlines">
+							<ApexPointSeries TItem="MostAirlines"
+											 Items="aero"
+											 SeriesType="SeriesType.Bar"
+											 XValue="@(e => e.Nombre_aerolinea)"
+											 YValue="@(e => e.Boletos_vendidos)"
+												OrderByDescending="e=>e.Y"></ApexPointSeries>
+						</ApexChart>
+					</div>
+					<h4>Ingresos por aerolinea</h4>
+					<div class="flight-table-container modal">
+						<div class="table-inner">
+							<table class="flight-table">
+								<thead>
+									<tr>
+										<th>Cliente</th>
+										<th>DNI</th>
+										<th>Fecha</th>
+										<th>Estado</th>
+									</tr>
+								</thead>
+								<tbody>
+									@if (ventas.Any())
+									{
+										foreach (var v in ventas)
+										{
+											<tr>
+												<td>@v.Nombre_aerolinea</td>
+												<td>
+													@v.Total
+												</td>
+												<td>
+													@v.Porcentaje %
+												</td>
+												<td> @(Math.Round(v.Total*v.Porcentaje/100,2))</td>
+											</tr>
+
+										}
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<h4>Vuelos por aerolinea</h4>
+					<div class="flight-table-container modal">
+						<div class="table-inner">
+							<table class="flight-table">
+								<thead>
+									<tr>
+										<th>Aerolinea</th>
+										<th>Vuelos</th>
+
+									</tr>
+								</thead>
+								<tbody>
+									@if (vuelosAerolineas.Any())
+									{
+										foreach (var v in vuelosAerolineas)
+										{
+											<tr>
+												<td>@v.Nombre_aerolinea</td>
+												<td>
+													@v.Total
+												</td>
+											</tr>
+
+										}
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<h4>Destinos más visitados</h4>
+					<ApexChart @key="chartKey4" TItem="MasVisitados">
+						<ApexPointSeries
+							TItem="MasVisitados"
+							Items="masVisitados"
+							XValue="@(e=>e.Destino)"
+							YValue="@(e=>e.Visitas)"
+							SeriesType="SeriesType.Donut">
+						</ApexPointSeries>
+					</ApexChart>
+
+				
+				</div>
+			</div>
+			<div class="panel">
+				<button class="panel-btn" @onclick="DescargarP">
+					Descargar pdf <i class="fi fi-rr-file-pdf"></i>
+				</button>
+			</div>
+
+		</div>
+		</div>
+	
+</section>
+
+
+@code {
+	public ElementReference contentToPrint;
+	public ElementReference content2;
+	public List<string> Stats = new List<string>() { "","","","","",""};
+	private Guid chartKey3 = Guid.NewGuid();
+	private Guid chartKey4 = Guid.NewGuid();
+	public List<UsuariosMes> ejemplos = new List<UsuariosMes>()
+	{
+		new UsuariosMes{Total=3,Dias=1},
+		new UsuariosMes{Total=5,Dias=2},
+		new UsuariosMes{Total=8,Dias=3},
+		new UsuariosMes{Total=7,Dias=4},
+		new UsuariosMes{Total=2,Dias=5},
+		new UsuariosMes{Total=1,Dias=6},
+		new UsuariosMes{Total=9,Dias=7}
+
+	};
+	public List<MostPack> paquetes = new List<MostPack>();
+	public List<UsuarioReserva> reservas = new List<UsuarioReserva>();
+	public List<MostAirlines> aero = new List<MostAirlines>();
+	public List<VentaAerolinea> ventas = new List<VentaAerolinea>();
+	public List<VuelosAerolinea> vuelosAerolineas = new List<VuelosAerolinea>();
+	public List<MasVisitados> masVisitados = new List<MasVisitados>();
+
+	public decimal Total_ventas = 0;
+	public decimal Retencion = 0;
+	public decimal Ocupacion = 0;
+
+	protected override async Task OnInitializedAsync()
+	{
+
+		FbConnection connection = await databaseConnection.GetConnectionAsync();
+		Stats[0] = await connection.QueryFirstAsync<string>("SELECT COUNT(*) FROM RESERVAS WHERE ESTADO = 'APROBADO' AND EXTRACT(MONTH FROM FECHA_RESERVA)=@Mes", new {Mes = DateTime.Now.Month});
+		Stats[1] = await connection.QueryFirstAsync<string>("SELECT COUNT(*) FROM USERS WHERE EXTRACT(MONTH FROM FECHA_REGISTRO)=@Mes", new {Mes = DateTime.Now.Month});
+		Stats[2] = await connection.QueryFirstAsync<string>("SELECT COUNT(*) FROM VUELOS WHERE ESTADO = 'FINALIZADO'");
+		Stats[3] = await connection.QueryFirstAsync<string>("SELECT COUNT(*) FROM PAQUETES WHERE EXTRACT(MONTH FROM FECHA_INICIO) = @Mes;", new{Mes = DateTime.Now.Month});
+		Stats[4] = await connection.QueryFirstAsync<string>("SELECT COUNT(*) FROM   RESERVA_PAQUETES WHERE EXTRACT(MONTH FROM FECHA) = @Mes", new { Mes = DateTime.Now.Month });
+		Stats[5] = await connection.QueryFirstAsync<string>("SELECT COUNT(*) FROM   RESERVAS WHERE EXTRACT(MONTH FROM FECHA_RESERVA) = @Mes", new { Mes = DateTime.Now.Month });
+		ejemplos = (await connection.QueryAsync<UsuariosMes>("SELECT EXTRACT(DAY FROM FECHA_REGISTRO) AS DIAS, COUNT(*) AS TOTAL FROM   USERS WHERE EXTRACT(MONTH FROM FECHA_REGISTRO) = @Mes GROUP BY DIAS ;", new { Mes = DateTime.Now.Month })).ToList();
+		reservas = (await connection.QueryAsync<UsuarioReserva>("SELECT * FROM INFO_RES ORDER BY FECHA_RESERVA DESC FETCH NEXT 5 ROWS ONLY")).ToList();
+		vuelosAerolineas = (await connection.QueryAsync<VuelosAerolinea>("SELECT A.NOMBRE_AEROLINEA, COUNT(*) AS TOTAL FROM VUELOS AS V INNER JOIN AEROLINEAS AS A ON V.ID_AEROLINEA = A.ID_AEROLINEA GROUP BY A.NOMBRE_AEROLINEA")).ToList();
+		aero = (await connection.QueryAsync<MostAirlines>("SELECT B.NOMBRE_AEROLINEA, COUNT(*) AS BOLETOS_VENDIDOS FROM BOLETO_INFO AS B GROUP BY B.NOMBRE_AEROLINEA")).ToList();
+		ventas = (await connection.QueryAsync<VentaAerolinea>("SELECT A.NOMBRE_AEROLINEA, A.PORCENTAJE, SUM(R.MONTO_TOTAL) AS TOTAL FROM RESERVAS AS R INNER JOIN VUELOS AS V ON R.ID_VUELO = V.ID_VUELO INNER JOIN AEROLINEAS AS A ON V.ID_AEROLINEA = A.ID_AEROLINEA AND R.ESTADO = 'APROBADO' GROUP BY A.NOMBRE_AEROLINEA, A.PORCENTAJE ORDER BY TOTAL DESC")).ToList();
+		masVisitados = (await connection.QueryAsync<MasVisitados>("SELECT * FROM MAS_VISITADOS")).ToList();
+		foreach (var v in ventas)
+		{
+
+
+			Total_ventas += Math.Round(v.Total * v.Porcentaje / 100, 2);
+
+
+		}
+
+		int total_u = await connection.QueryFirstAsync<int>("SELECT COUNT(*) FROM USERS");
+		int u_act = await connection.QueryFirstAsync<int>("SELECT COUNT(*) FROM USERS WHERE ESTADO = TRUE");
+
+		int total_b = await connection.QueryFirstAsync<int>("SELECT COUNT(*) FROM BOLETOS");
+		int b_checked = await connection.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM BOLETOS WHERE ""CHECK""=TRUE");
+		Retencion = Math.Round( (decimal)(u_act / total_u), 2);
+		Ocupacion = Math.Round((decimal)(b_checked / total_b),2);
+
+
+		
+
+		for(int i = 1; i<=31; i++)
+		{
+			if(!ejemplos.Exists(e=>e.Dias == i))
+			{
+				ejemplos.Add(new UsuariosMes() { Total = 0, Dias = i });
+			}
+		}
+
+		paquetes = (await connection.QueryAsync<MostPack>("SELECT RP.ID_PAQUETE,P.NOMBRE_PAQUETE, P.CUPOS_DISPONIBLES, P.FECHA_SALIDA, COUNT(*) AS TOTAL FROM RESERVA_PAQUETES AS RP INNER JOIN PAQUETES AS P ON P.ID_PAQUETE = RP.ID_PAQUETE GROUP BY RP.ID_PAQUETE, P.NOMBRE_PAQUETE, P.FECHA_SALIDA, P.CUPOS_DISPONIBLES ORDER BY TOTAL DESC FETCH NEXT 3 ROWS ONLY")).ToList();
+		chartKey3 = Guid.NewGuid();
+		chartKey4 = Guid.NewGuid();
+	}
+
+
+	private async Task Descargar(MouseEventArgs args)
+	{
+		try
+		{
+			await JS.InvokeVoidAsync("htmlToPdfSimple", contentToPrint, "Reporte-Gestion.pdf");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error: {ex.Message}");
+		}
+	}
+	private async Task DescargarP(MouseEventArgs args)
+	{
+		try
+		{
+			await JS.InvokeVoidAsync("htmlToPdfSimple", content2, "Reporte-Desempeno.pdf");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error: {ex.Message}");
+		}
+	}
+
+
+
+
+
+
+	public class UsuariosMes
+	{
+		public int Total { get; set; }
+		public int Dias { get; set; }
+	}
+
+	public class MostPack
+	{
+		public string? Nombre_paquete{ get; set; }
+		public int Cupos_disponibles { get; set; }
+		public DateTime Fecha_salida { get; set; }
+		public int Total { get; set; }
+	}
+
+	public class MostAirlines
+	{
+		public string? Nombre_aerolinea { get; set; }
+		public int Boletos_vendidos { get; set; }
+	}
+
+	public class VentaAerolinea
+	{
+		public string? Nombre_aerolinea { get; set; }
+		public decimal Total { get; set; }
+		public decimal Porcentaje { get; set; }
+	}
+
+	public class VuelosAerolinea
+	{
+		public string? Nombre_aerolinea { get; set; }
+		public int Total { get; set; }
+	}
+
+	public class MasVisitados
+	{
+		public int Id { get; set; }
+		public string? Destino { get; set; }
+		public int Visitas { get; set; }
+	}
+}

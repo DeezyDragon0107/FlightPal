@@ -1,0 +1,114 @@
+﻿@page "/Profile/pagos"
+@attribute [Authorize(Roles = "USER")]
+@layout Dashboard
+@inject IDatabaseConnection databaseConnection
+<PageTitle>Pagos</PageTitle>
+<div class="pagos-container">
+    <div class="banner">
+        <h5>Pagos</h5>
+        <h3>Gestiona tus gastos en FlightPal</h3>
+    </div>
+	<div class="stats-container">
+        <StatCard Numero="@(Stats[0] + "Bs")" IconColor="#095D4A" Color="#095D4A30" FontMin Nombre="Gastos Totales"><i class="fi fi-rr-send-money"></i></StatCard>
+        <StatCard Numero="@(Stats[1] + "Bs")" IconColor="#202447" Color="#1769D730" FontMin Nombre="Vuelos"><i class="fi fi-sr-ticket-airline"></i></StatCard>
+        <StatCard Numero="@(Stats[2] + "Bs")" IconColor="#F59E0B" Color="#F59E0B30"  FontMin Nombre="Paquetes"><i class="fi fi-rr-box-open"></i></StatCard>
+	</div>
+
+    <div class="expense-table-container">
+        <div class="table-header">
+            <h3 class="table-title">Historial de Gastos</h3>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="expensesTable">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Metodo de pago</th>
+                        <th>Categoría</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="expensesTableBody">
+                    @if (pagos.Any())
+                    {
+                        foreach(var p in pagos)
+                        {
+                            <tr>
+								<td>@p.Fecha_reserva.ToShortDateString()</td>
+								<td>@p.Metodo_pago</td>
+								<td>@p.Categoria</td>
+								<td>@p.Monto_total Bs</td>
+								<td>
+                                    <span class="status @p.Estado">@p.Estado</span>
+                                    
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                       <tr><th colspan="5">No tienes pagos registrados</th></tr>
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+
+@code {
+
+    public int Id_user { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    public Guid chartKey5 = Guid.NewGuid();
+    public List<string> Stats = new List<string>() { "", "", "" };
+    public List<Pago> pagos = new List<Pago>();
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var autenticationState = await authenticationStateTask!;
+            foreach (var c in autenticationState.User.Claims)
+            {
+                if (c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid")
+                {
+                    Id_user = int.Parse(c.Value);
+                }
+
+            }
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            pagos = (await conn.QueryAsync<Pago>("SELECT FECHA_RESERVA, MONTO_TOTAL, ESTADO, METODO_PAGO FROM RESERVAS WHERE ID_USER = @Id", new{Id=Id_user})).ToList();
+            pagos.AddRange((await conn.QueryAsync<PagoP>("SELECT FECHA AS FECHA_RESERVA, MONTO_TOTAL, ESTADO, METODO_PAGO FROM RESERVA_PAQUETES WHERE ID_USER = @Id", new { Id = Id_user })).ToList());
+            chartKey5 = Guid.NewGuid();
+
+            Stats[0] = pagos.Sum(e => e.Monto_total).ToString();
+            Stats[1] = pagos.Sum(e => { if (e.Categoria == "Vuelo") { return e.Monto_total; } else { return 0; } }).ToString();
+            Stats[2] = pagos.Sum(e => { if (e.Categoria == "Paquete") { return e.Monto_total; } else { return 0; } }).ToString();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error {ex.Message}");
+        }
+    }
+
+    public class Pago
+    {
+        public decimal Monto_total{ get; set; }
+        public DateTime Fecha_reserva { get; set; }
+        public string? Estado { get; set; }
+        public string? Categoria { get; set; } = "Vuelo";
+        public string? Metodo_pago { get; set; }
+    }
+    public class PagoP : Pago
+    {
+        public PagoP()
+        {
+            Categoria = "Paquete";
+        }
+    }
+
+}

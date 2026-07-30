@@ -1,0 +1,29 @@
+﻿<div class="alt-card">
+        <div class="alt-card-header">
+            <div class="alt-card-title">@(Title??"-")</div>
+            <div class="change-badge @(Porcentaje>0?"positive":"negative")">
+                @if (Porcentaje > 0){
+                    <i class="fi fi-br-arrow-up"></i>
+                }else{
+				    <i class="fi fi-br-arrow-down"></i>
+                }       
+                @Porcentaje%
+            </div>
+        </div>
+        <div class="alt-card-value">@(Cantidad??"-")</div>
+        <div class="alt-card-change">
+            <i class="fas fa-history"></i>
+            <span>@(Mensaje??"-")</span>
+        </div>
+</div>
+
+@code {
+	[Parameter]
+	public string? Title { get; set; }
+	[Parameter]
+	public string? Cantidad { get; set; }
+	[Parameter]
+	public double? Porcentaje { get; set; }
+	[Parameter]
+	public string? Mensaje { get; set; }
+}

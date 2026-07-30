@@ -1,0 +1,67 @@
+﻿.change-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .5rem .9rem;
+    border-radius: 1.2rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+    .change-badge.positive {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .change-badge.negative {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .change-badge i {
+        font-size: 0.8rem;
+    }
+
+.change-text {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.alt-card {
+    background: white;
+    border-radius: .8rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.alt-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.2rem;
+}
+
+.alt-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.alt-card-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.alt-card-change {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .8rem 0;
+    border-top: 1px solid #e2e8f0;
+}

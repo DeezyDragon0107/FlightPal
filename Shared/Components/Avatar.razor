@@ -1,0 +1,24 @@
+﻿<div class="avatar-element">
+	<span class="avatar" style="background-image: url(@Data);  @(Rounded ? "border-radius: 50%;" : "") height:@(Size)rem;">
+	</span>
+	<p>
+		@ChildContent
+	</p>
+
+
+</div>
+
+
+
+
+@code {
+	[Parameter]
+	public string? Data { get; set; }
+	[Parameter]
+	public bool Rounded { get; set; }
+	[Parameter]
+	public float Size { get; set; } = 3;
+	[Parameter]
+	public RenderFragment? ChildContent { get; set; }
+
+}

@@ -1,0 +1,453 @@
+﻿@page "/vuelos"
+@inject IDatabaseConnection databaseConnection
+@inject IJSRuntime JS
+@inject IDolarService dolarService
+<PageTitle>Vuelos</PageTitle>
+
+<section class="busqueda">
+	<div class="title-section">
+		<div class="title-text">
+			<h2>Vuelos</h2>
+			<p>Compara precios en todas nuestras aerolineas asociadas</p>
+		</div>
+		<div class="image-title">
+		</div>
+
+	</div>
+
+	<div class="parameters">
+
+		<div class="search-parameter">
+			<label for="Origen">Origen</label>
+			<select name="Origen" @bind="origen_vuelo.Id_destino"  @onfocusout="SetOrigen">
+				@if (destinos.Any())
+				{
+					foreach (var destino in destinos)
+					{
+						<option value="@destino.Id_destino">@destino.Nombre_destino</option>
+					}
+				}
+			</select>
+		</div>
+
+		<div class="search-parameter">
+			<label for="Destino">Destino</label>
+
+			<select name="Destino" @bind="destino_vuelo.Id_destino">
+				@if (destinos.Any())
+				{
+					foreach (var destino in destinos)
+					{
+						@if (destino.Id_destino != origen_vuelo.Id_destino)
+						{
+							<option value="@destino.Id_destino">@destino.Nombre_destino</option>
+						}
+
+					}
+				}
+			</select>
+		</div>
+
+		<div class="search-parameter">
+			<label for="Fecha">Fecha</label>
+			<input type="date" min="@(DateOnly.FromDateTime(DateTime.Now).ToString("yyyy-MM-dd"))" name="Fecha" @bind="Fecha" @onfocusout="HandleDate" />
+		</div>
+
+		<div class="search-parameter">
+			<label for="Fecha">Pasajeros</label>
+			<input type="number" name="Pasajeros" value="0" max="10" min="0" />
+		</div>
+
+		<button @onclick="BuscarVuelo">Buscar</button>
+	</div>
+
+</section>
+
+<section class="resultados">
+	<div class="sidebar">
+		<h4>Rango de precios</h4>
+		<div>
+			<label for="price">10$-1000$</label>
+			<input type="range" name="price" value="1000" min="10" max="1000" step="1" />
+
+		</div>
+
+		<h4>Aerolinea</h4>
+		@if (aerolineas.Any())
+		{
+			foreach(var aerolinea in aerolineas)
+			{
+				<div class="aerolinea">
+					<input type="checkbox" name="@aerolinea.Nombre_aerolinea" value="@aerolinea.Id_aerolinea" />
+					<label for="@aerolinea.Nombre_aerolinea">@aerolinea.Nombre_aerolinea</label>
+
+				</div>
+			}
+		}
+
+
+	</div>
+	<div class="results-flight">
+		@if (vuelos.Any())
+		{
+			foreach(var v in vuelos)
+			{
+			 
+				<div class="flight-element">
+					<header class="flight-header">
+						<div class="airline-img" style="background-image: url(@(aerolineas.Find(e => e.Id_aerolinea == v.Id_aerolinea).GetImageUrl())); background-size: contain; background-repeat: no-repeat">
+						</div>
+						<div class="id-vuelo">
+							<div class="status-container">
+								@if (v.Internacional)
+								{
+									<span class="status active">Internacional</span>
+								}
+								else
+								{
+									<span class="status pending">Nacional</span>
+								}
+
+							</div>
+							<div class="status-container">
+								<span class="status active">@v.Tipo_Vuelo</span>
+							</div>
+							<div>
+								<p>@(aerolineas.Find(e => e.Id_aerolinea == v.Id_aerolinea).Abreviatura + v.Id_vuelo.ToString().PadLeft(5, '0'))</p>
+							</div>
+
+						</div>
+
+					</header>
+					<div class="flight-content">
+						<div class="flight-info-item">
+							<h5>Origen</h5>
+							<p>@destinos.Find(e=>e.Id_destino == v.Origen).Nombre_destino</p>
+							<p>@v.Fecha_salida.ToString("dd-MM-yyyy hh:mm tt")</p>
+						</div>
+						<div class="flight-info-item">
+							<h5>Destino</h5>
+							<p>@destinos.Find(e => e.Id_destino == v.Destino).Nombre_destino</p>
+							<p>@v.Fecha_llegada.ToString("dd-MM-yyyy hh:mm tt")</p>
+						</div>
+						<div class="flight-info-item">
+							<h5>Asientos disponibles</h5>
+							<p>@v.Asientos.ToString()</p>
+
+						</div>
+						<div class="flight-info-item">
+							<h5>Precio</h5>
+							<p>@v.Precio Bs / @(Math.Round((v.Precio/Convert.ToDecimal(DolarHoy.Promedio)),2))$</p>
+						</div>
+						<div class="flight-info-item">
+							<button @onclick="@(()=>Reservar(v))">Reservar</button>
+						</div>
+					</div>
+				</div>
+
+			}
+		}
+		else
+		{
+			if (encontrado)
+			{
+				<div class="no-element">
+					<img src="/imgs/viajar.gif" alt="Alternate Text" />
+					<h3>Busca un vuelo para comenzar tu travesía!</h3>
+				</div>
+			}
+			else
+			{
+				<div class="no-element">
+					<img src="/imgs/viaje.gif" alt="Alternate Text" />
+					<h3>No se han encontrado vuelos</h3>
+				</div>
+			}
+
+		}
+		
+	</div>
+
+
+</section>
+
+<AuthorizeView>
+	<Authorized>
+		<Modal Displayed="MReservar" DisplayedChanged="@(()=>{MReservar=false; CurrentReserva = new Reserva();})">
+			<div class="reserva-preview">
+				<div class="flight-data">
+					<div class="flight-element">
+						<header class="flight-header">
+							<div class="airline-img" style="background-image: url(@(aerolineas.Find(e => e.Id_aerolinea == CurrentVuelo.Id_aerolinea).GetImageUrl())); background-size: contain; background-repeat: no-repeat">
+							</div>
+							<div class="id-vuelo">
+								<div class="status-container">
+									@if (CurrentVuelo.Internacional)
+									{
+										<span class="status active">Internacional</span>
+									}
+									else
+									{
+										<span class="status pending">Nacional</span>
+									}
+
+								</div>
+								<div class="status-container">
+									<span class="status active">@CurrentVuelo.Tipo_Vuelo</span>
+								</div>
+								<div>
+									<p>@(aerolineas.Find(e => e.Id_aerolinea == CurrentVuelo.Id_aerolinea).Abreviatura + CurrentVuelo.Id_vuelo.ToString().PadLeft(5, '0'))</p>
+								</div>
+
+							</div>
+
+						</header>
+						<div class="flight-content">
+							<div class="flight-info-item">
+								<h5>Origen</h5>
+								<p>@destinos.Find(e => e.Id_destino == CurrentVuelo.Origen).Nombre_destino</p>
+								<p>@CurrentVuelo.Fecha_salida.ToString("dd-MM-yyyy hh:mm tt")</p>
+							</div>
+							<div class="flight-info-item">
+								<h5>Destino</h5>
+								<p>@destinos.Find(e => e.Id_destino == CurrentVuelo.Destino).Nombre_destino</p>
+								<p>@CurrentVuelo.Fecha_llegada.ToString("dd-MM-yyyy hh:mm tt")</p>
+							</div>
+							<div class="flight-info-item">
+								<h5>Asientos disponibles</h5>
+								<p>@CurrentVuelo.Asientos.ToString()</p>
+
+							</div>
+							<div class="flight-info-item">
+								<h5>Precio</h5>
+								<p>@CurrentVuelo.Precio Bs / <b class="dolar-b">@(Math.Round((CurrentVuelo.Precio / Convert.ToDecimal(DolarHoy.Promedio)), 2))$</b></p>
+							</div>
+						</div>
+					</div>
+					<div class="total">
+						<h3>Total: </h3>
+						<p>@((CurrentReserva.Adultos+CurrentReserva.Ninos)*CurrentVuelo.Precio)Bs</p>
+						<p><b class="dolar-b">@(Math.Round((CurrentReserva.Adultos + CurrentReserva.Ninos) * CurrentVuelo.Precio / Convert.ToDecimal(DolarHoy.Promedio), 2))$</b></p>
+					</div>
+				</div>
+				<div class="modal-add-vuelo">
+					<form @onsubmit="GuardarReserva">
+						<h3>Datos de la reserva</h3>
+						<h4>Pasajeros</h4>
+						<div class="input-group">
+							<div class="input-field">
+								<label>Adultos</label>
+								<input @bind="CurrentReserva.Adultos" type="number" min="0" max="@CurrentVuelo.Asientos"/>
+							</div>
+							<div class="input-field">
+								<label>Niños</label>
+								<input @bind="CurrentReserva.Ninos" type="number" min="0" max="@CurrentVuelo.Asientos" />
+							</div>
+						</div>
+						<div class="input-field">
+							<label>Método de pago</label>
+							<select @bind="CurrentReserva.Metodo_pago">
+								<option selected value="PAGO_MOVIL">Pago Movil</option>
+								<option value="DEPOSITO">Depósito</option>
+								<option value="TRANSFERENCIA">Transferencia</option>
+							</select>
+						</div>
+						@if (CurrentReserva.Metodo_pago == "DEPOSITO" || CurrentReserva.Metodo_pago == "TRANSFERENCIA")
+						{
+							<div class="info-pago">
+								<p>Banco de Venezuela</p>
+								<p>Cuenta: 01020668540000290564</p>
+								<p>V-30283225</p>
+								<p>@(CurrentReserva.Metodo_pago == "TRANSFERENCIA" ? "Beneficiario: Diego Gómez" : "")</p>
+							</div>
+						}
+						else
+						{
+							<div class="info-pago qr">
+								<img src="/imgs/qr.jpg" alt="" />
+							</div>
+						}
+
+						<div class="input-group">
+							<div class="input-field">
+								<label>Numero de comprobante</label>
+								<input @bind="CurrentReserva.Num_comprobante" type="text" placeholder="00000000" maxlength="8" pattern="^[0-9]*$" />
+							</div>
+						
+						</div>
+						<div class="input-field">
+							<label>Imagen de comprobante</label>
+							<InputFile required id="inputFile"  OnChange="HandleSubmit" accept="image/PNG, image/JPEG"></InputFile>
+						</div>
+						<div class="img-container">
+							<img src="@urlImagen" class="img-preview" alt="" />
+						</div>
+						
+						<div class="buttons">
+							<button @onclick="@(() => { MReservar = false; CurrentReserva = new Reserva(); })" class="btn cancel expand">Cancelar</button>
+							<button type="submit" class="btn expand">Reservar</button>
+						</div>
+					</form>
+					
+				</div>
+			</div>
+		</Modal>
+	</Authorized>
+	<NotAuthorized>
+		<Modal Displayed="MReservar" DisplayedChanged="@(() => MReservar = false)">
+			<div class="inicia-sesion">
+				<h3>Debes iniciar sesión para reservar un vuelo</h3>
+				<img src="/imgs/acceso.gif" />
+				<a class="btn-iniciar" href="/login">Inicia Sesión</a>
+			</div>
+		
+		</Modal>
+	</NotAuthorized>
+</AuthorizeView>
+@code {
+	[CascadingParameter]
+	private Task<AuthenticationState>? authenticationStateTask { get; set; }
+	int Selector { get; set; } = 1;
+	DateOnly Fecha { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+	List<Vuelo> vuelos { get; set; } = new List<Vuelo>();
+	List<Aerolinea> aerolineas { get; set; } = new List<Aerolinea>();
+	List<Destino> destinos { get; set; } = new List<Destino>();
+	IJSObjectReference jsModule;
+
+	public string urlImagen = "";
+	public Destino origen_vuelo { get; set; } = new Destino();
+	public Destino destino_vuelo { get; set; } = new Destino();
+	public bool encontrado { get; set; } = true;
+	public bool MReservar = false;
+	public Dolar DolarHoy;
+	public Vuelo CurrentVuelo = new Vuelo();
+	public Reserva CurrentReserva = new Reserva();
+
+	protected override async Task OnInitializedAsync()
+	{
+		FbConnection connection = await databaseConnection.GetConnectionAsync();
+		aerolineas = (await connection.QueryAsync<Aerolinea>("SELECT * FROM AEROLINEAS")).ToList();
+		destinos = (await connection.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+		origen_vuelo.Id_destino = destinos[0].Id_destino;
+		destino_vuelo.Id_destino = destinos[1].Id_destino;
+		DolarHoy = await dolarService.GetDolarAsync();
+		jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "/app.js");
+		StateHasChanged();
+		connection.Close();
+
+	}
+
+	private async Task SetOrigen()
+	{
+
+		StateHasChanged();
+	}
+
+	private async Task BuscarVuelo(){
+		try
+		{
+
+			FbConnection connection = await databaseConnection.GetConnectionAsync();
+			vuelos = (await connection.QueryAsync<Vuelo>("SELECT * FROM VUELOS WHERE ORIGEN = @Id_origen AND DESTINO = @Id_destino AND ASIENTOS > 0 AND ESTADO = 'PROGRAMADO'", new{Id_origen = origen_vuelo.Id_destino, Id_destino = destino_vuelo.Id_destino})).ToList();
+			if (!vuelos.Any())
+			{
+				encontrado = false;
+
+			}
+			connection.Close();
+		}
+		catch(Exception ex)
+		{
+			await JS.InvokeVoidAsync("alert", "Ha ocurrido un error buscando los vuelos");
+			encontrado = false;
+
+		}
+	}
+
+	public async Task HandleDate()
+	{
+		if (Fecha < DateOnly.FromDateTime(DateTime.Now))
+		{
+			Fecha = DateOnly.FromDateTime(DateTime.Now);
+		}
+	}
+
+	public async Task Reservar(Vuelo v)
+	{
+		CurrentVuelo = v;
+		MReservar = true;
+	}
+	public async Task GuardarReserva()
+	{
+		if ((CurrentReserva.Adultos + CurrentReserva.Ninos) > CurrentVuelo.Asientos)
+		{
+			await JS.InvokeVoidAsync("alert", "Los pasajeros seleccionados exceden la cantidad de asientos disponibles");
+			return;
+		}
+		if (string.IsNullOrWhiteSpace(CurrentReserva.Num_comprobante))
+		{
+			await JS.InvokeVoidAsync("alert", "Asegurese de colocar el numero de comprobante");
+			return;
+		}
+		try
+		{
+			var autenticationState = await authenticationStateTask!;
+			foreach (var c in autenticationState.User.Claims)
+			{
+				if (c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid")
+				{
+					CurrentReserva.Id_user = int.Parse(c.Value);
+				}
+
+			}
+			CurrentReserva.Id_vuelo = CurrentVuelo.Id_vuelo;
+			CurrentReserva.Monto_total = Convert.ToDecimal(CurrentVuelo.Precio) * (CurrentReserva.Adultos + CurrentReserva.Ninos);
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			var sql = @"INSERT INTO RESERVAS(ID_USER, MONTO_TOTAL, METODO_PAGO, NUM_COMPROBANTE, IMAGEN_COMPROBANTE, FORMATO_IMAGEN, ID_VUELO, ADULTOS, NINOS) 
+						VALUES(@Id_user, @Monto_total, @Metodo_pago, @Num_comprobante, @Imagen_comprobante, @Formato_imagen, @Id_vuelo, @Adultos, @Ninos)";
+			conn.Execute(sql, CurrentReserva);
+			await JS.InvokeVoidAsync("alert", $"Su reserva ha sido guardada con exito");
+			conn.Execute("UPDATE VUELOS SET ASIENTOS = ASIENTOS - @Asientos WHERE ID_VUELO = @Id_vuelo", new { Asientos = (CurrentReserva.Adultos + CurrentReserva.Ninos), Id_vuelo = CurrentReserva.Id_vuelo });
+			CurrentReserva = new Reserva();
+			CurrentVuelo = new Vuelo();
+			await BuscarVuelo();
+			urlImagen = "";
+			MReservar = false;
+
+		}
+		catch(Exception ex)
+		{
+			await JS.InvokeVoidAsync("alert", $"Error {ex.Message}");
+		}
+		
+
+
+	}
+
+	private async Task HandleSubmit(InputFileChangeEventArgs e)
+	{
+
+		if (e.File.Size > 1024 * 1024)
+		{
+			await ClearInputFile();
+			await JS.InvokeVoidAsync("alert", "El tamaño de la imagen no puede ser superior a 1MB");
+			urlImagen = "";
+			return;
+
+		}
+
+
+		var archivo = e.File;
+		archivo = await archivo.RequestImageFileAsync(archivo.ContentType, 256, 256);
+		var buffer = new byte[archivo.Size];
+		await archivo.OpenReadStream().ReadAsync(buffer);
+		urlImagen = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(buffer)}";
+		CurrentReserva.Imagen_comprobante = buffer;
+		CurrentReserva.Formato_imagen = archivo.ContentType;
+	}
+
+	private async Task ClearInputFile()
+	{
+		await jsModule.InvokeVoidAsync("clearFileInput");
+	}
+}

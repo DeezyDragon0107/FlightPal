@@ -1,0 +1,28 @@
+﻿@if (Displayed)
+{
+	<section class="modal">
+		
+		<div class="modal-window">
+			@ChildContent
+			<buttton class="close-button "><i class="fi fi-br-cross" @onclick="CloseModal"></i></buttton>
+		</div>
+	</section>
+	
+
+}
+@code {
+	[Parameter]
+	public bool Displayed { get; set; }
+	[Parameter]
+	public RenderFragment? ChildContent { get; set; }
+
+	[Parameter]
+	public EventCallback<bool> DisplayedChanged { get; set; }
+
+
+	private async Task CloseModal()
+	{
+		await DisplayedChanged.InvokeAsync(false);
+	}
+
+}

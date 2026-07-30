@@ -1,0 +1,4 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+POST https://localhost:7103/AuthController/sign-in
+###
+GET https://api.cedula.com.ve/api/v1?app_id=1546&token=6189477cd6c57f577ff6eff9c66d74f4&nacionalidad=V&cedula=14686369

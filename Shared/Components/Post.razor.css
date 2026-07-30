@@ -1,0 +1,53 @@
+﻿.post {
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+    border-radius: .5rem;
+    background-color: #f9f9f9;
+    box-shadow: rgba(0,0,0,0.25) 0px 1px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    font-family: Montserrat;
+    width: 100%;
+    max-width: 650px;
+    overflow: hidden;
+}
+
+.post-inner{
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+    width: 100%;
+}
+.post-image{
+    object-fit: cover;
+    width: 100%;
+
+}
+
+.post-inner p{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.date{
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
+    align-items: center;
+}
+
+.date p{
+    font-size: .8rem;
+    cursor: default;
+}
+
+
+.show{
+    white-space: wrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+}

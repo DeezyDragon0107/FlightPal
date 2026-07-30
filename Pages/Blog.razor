@@ -1,0 +1,100 @@
+﻿@page "/blog"
+@inject IDatabaseConnection databaseConnection
+<PageTitle>Blog</PageTitle>
+
+<div class="blog">
+
+
+    <div class="title-section">
+        <div class="title-text">
+            <h2>Las últimas noticias</h2>
+            <p>Consulta nuestras publicaciones y comunicados más destacados</p>
+        </div>
+        <div class="image-title">
+        </div>
+
+    </div>
+    <section class="blog-container">
+
+        <div class="post-section">
+        
+
+		    @if (posts.Any())
+		    {
+			    foreach(var p in posts)
+			    {
+				    <PostPreview Publi="@p" MaxW="800px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);"></PostPreview>
+			    }
+		    }
+
+
+	    </div>
+	    <aside class="social-media" >
+            <div class="sidebar-widget">
+                <h3 class="widget-title">Destinos Populares</h3>
+                <div class="topic-card">
+                    <div class="topic-image">
+                        <img src="/imgs/mgta-blog.jpg">
+                    </div>
+                    <div class="topic-content">
+                        <a href="#"><h4>Isla de Margarita: Playas paradisíacas y diversión</h4></a>
+                        <p class="topic-meta">Vuelos desde $120</p>
+                    </div>
+                </div>
+
+                <div class="topic-card">
+                    <div class="topic-image">
+                        <img src="/imgs/bmto-blog.jpg" alt="Barquisimeto">
+                    </div>
+                    <div class="topic-content">
+                        <a href="#"><h4>Barquisimeto: Cultura y tradición venezolana</h4></a>
+                        <p class="topic-meta">Vuelos desde $80</p>
+                    </div>
+                </div>
+
+                <div class="topic-card">
+                    <div class="topic-image">
+                        <img src="/imgs/ccs-blog.webp" alt="Caracas">
+                    </div>
+                    <div class="topic-content">
+                        <a href="#"><h4>Caracas: La capital de la aventura urbana</h4></a>
+                        <p class="topic-meta">Vuelos desde $90</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-widget">
+                    <h3 class="widget-title">Síguenos en Redes</h3>
+                    <div class="social-links">
+                        <a href="#" class="social-icon facebook">
+						<img src="imgs/facebook.png" alt="" />
+                        </a>
+                        <a href="#" class="social-icon twitter">
+						<img src="/imgs/gorjeo.png" alt="" />
+                        </a>
+                        <a href="#" class="social-icon instagram">
+						    <img src="/imgs/social.png" alt="" />
+                        </a>
+                        <a href="#" class="social-icon youtube">
+						    <img src="imgs/youtube.png" alt="" />
+                        </a>
+                    </div>
+            </div>
+		
+
+
+	    </aside>
+
+    </section>
+</div>
+
+@code {
+
+	public List<Publicacion> posts = new List<Publicacion>();
+	protected override async Task OnInitializedAsync()
+	{
+		FbConnection connection = await databaseConnection.GetConnectionAsync();
+		posts = (await connection.QueryAsync<Publicacion>("SELECT * FROM POSTS")).ToList();
+
+	}  
+
+}

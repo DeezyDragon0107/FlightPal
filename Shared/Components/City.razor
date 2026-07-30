@@ -1,0 +1,93 @@
+
+@rendermode InteractiveServer
+
+@switch (CityName)
+{
+	case 0:
+		{
+			<section class="city-container">
+				<div class="city-inner">
+					<h3>Margarita</h3>
+					<p>
+						La Isla de Margarita (conocida también como la Perla del Caribe o simplemente Margarita)
+						es una isla caribeña que se encuentra al sureste del mar Caribe, en el noreste del territorio
+						venezolano y al norte de la Península de Araya del estado Sucre. Junto con las islas de Coche y
+						Cubagua, constituyen el único estado insular de Venezuela denominado Nueva Esparta, que al mismo tiempo
+						forma parte de las Antillas menores de la América Insular. Su capital es La Asunción y su ciudad más
+						poblada es Porlamar. La isla tuvo un papel importante durante la Independencia de Venezuela.
+					</p>
+					<a class="paquete" href="tarifas">Ver paquetes</a>
+				</div>
+
+				<div class="img-city" style="background-image: url('/imgs/mgta.webp');">
+					
+				</div>
+
+			</section>
+			
+
+			break;
+		}
+	case 1:
+		{
+			<section class="city-container">
+				<div class="city-inner">
+					<h3>Caracas</h3>
+					<p>
+						Caracas es la capital y ciudad más poblada de Venezuela. Desde el siglo XIX, ha sido
+						el epicentro del poder político de la nación venezolana. Se encuentra en la Región
+						Capital de Venezuela a 12 km del Mar Caribe, dentro de un valle montañoso. A pesar
+						de su proximidad a la costa de La Guaira, la ciudad se ubica a casi 1000 metros de
+						altitud, separada del Litoral Central por la Cordillera de la Costa, la cual, en su tramo
+						urbano, conforma el Parque Nacional El Ávila. La autopista Caracas-La Guaira es la
+						principal vía de comunicación entre la ciudad y del Estado La Guaira, además de
+						conectar con el Aeropuerto Internacional de Maiquetía Simón Bolívar y el Puerto de La
+						Guaira, uno de los más importantes del país.
+					</p>
+					<a class="paquete" href="tarifas">Ver paquetes</a>
+				</div>
+
+				<div class="img-city" style="background-image: url('/imgs/Caracas.jpg');">
+				</div>
+
+			</section>
+
+			break;
+		}
+	case 2:
+		{
+			<section class="city-container">
+				<div class="city-inner">
+					<h3>Maracaibo</h3>
+					<p>
+						Maracaibo es una ciudad venezolana capital del Estado Zulia, ubicada en el noroeste de Venezuela. 
+						Fundada en 1529 por el alemán Ambrosio Alfinger como Nueva Núremberg (hispanización de Neu Nürnberg, en alemán) 
+						en homenaje a la ciudad alemana Núremberg. Es la segunda ciudad más poblada de Venezuela y el centro económico más
+						importante del occidente del país, debido a la industria petrolera que se desarrolla en las orillas del Lago de Maracaibo, 
+						específicamente en su sector noroccidental. Históricamente calificada como la primera ciudad de Venezuela, por su pujanza y 
+						desarrollo económico, al igual que por ser la primera ciudad del país en ser pionera en utilizar varios tipos de servicios 
+						públicos como la luz eléctrica y por estar ubicada en las orillas del lago, sitio donde se originó el nombre del país
+					</p>
+					<a class="paquete" href="tarifas">Ver paquetes</a>
+				</div>
+
+				<div class="img-city" style="background-image: url('/imgs/mcbo2.jpg');">
+				</div>
+			</section>
+			break;
+		}
+	default:
+		{
+			<h2>City Not found</h2>
+			break;
+		}
+}
+
+
+@code{
+
+	[Parameter]
+	public int CityName {get; set;}
+
+
+}

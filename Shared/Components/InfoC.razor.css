@@ -1,0 +1,48 @@
+﻿.container-accordion {
+    display: grid;
+    grid-template-rows: 2.1rem 0fr;
+    background-color: inherit;
+    height: max-content;
+    cursor: pointer;
+    transition: grid-template-rows 0.5s ease;
+    row-gap: .5rem;
+}
+
+.expanded {
+    grid-template-rows: 2.1rem 1fr;
+}
+
+    .expanded .accordion-content {
+        padding: .3rem 1rem;
+    }
+
+.title-accordion {
+    padding: .5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    grid-row: 1;
+}
+
+    .title-accordion button {
+        border: none;
+        background-color: inherit;
+        color: inherit;
+        transition: transform 0.5s ease;
+    }
+
+    .title-accordion h3 {
+        font-size: .8rem;
+        font-weight: 500;
+    }
+
+.accordion-content {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: 0rem .5rem;
+    justify-content: flex-start;
+    grid-row: 2;
+    overflow: hidden;
+    transition: padding 0.5s ease;
+}

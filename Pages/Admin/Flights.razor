@@ -1,0 +1,588 @@
+﻿@page "/admin/flights"
+@layout Dashboard
+@attribute [Authorize(Roles = "ADMIN")]
+@inject NavigationManager navigation
+@inject IDatabaseConnection databaseConnection
+@inject IJSRuntime JS
+@inject IDolarService dolarService
+<PageTitle>Vuelos</PageTitle>
+
+<section class="flight-section">
+	<div class="title-section">
+		<div class="title-text">
+			<h2>Vuelos</h2>
+			<p>Gestión de vuelos disponibles y reservas</p>
+		</div>
+		<div class="image-title">
+
+		</div>
+	
+	</div>
+
+	<div class="stats-container">
+		<StatCard Numero="@Stats[0]"  Nombre="Vuelos Programados" Color="rgba(56, 176, 0, 0.1)" IconColor="#38b000"><i class="fi fi-sr-plane-alt"></i></StatCard>
+		<StatCard Numero="@Stats[1]"  Onclick="ShowReservas" Style="cursor: pointer;"  Nombre="Reservas Activas" Color="#4361EE3F" IconColor="#193A85">
+			<i class="fi fi-br-reservation-table"></i>
+				@if (Stats[1] != "" && Stats[1] != "0")
+				{
+					<span class="notification"></span>				
+				}
+		</StatCard>
+		<StatCard Numero="@Stats[2]" Nombre="Vuelos Cancelados" Color="#EF44444F" IconColor="#EF476F"><i class="fi fi-rr-plane-slash"></i></StatCard>
+	</div>
+
+	<div class="flight-bar">
+		<h3>Todos los vuelos</h3>
+		<div class="filters">
+		@* 	<select @onchange="Filtrar">
+				<option value="value">Todas las Aerolineas</option>
+				@if (Aerolineas.Any())
+				{
+					foreach(var aero in Aerolineas)
+					{
+						<option value="@aero.Id_aerolinea">@aero.Nombre_aerolinea</option>
+					}
+				}
+			</select>
+			<select>
+				<option value="all">Todos los tipos de vuelo</option>
+			</select>
+			<select>
+				<option value="value">text</option>
+			</select> *@
+		</div>
+		
+		<button class="button-add" @onclick="AgregarVuelo"><i class="fi fi-br-plus"></i> Nuevo Vuelo</button>
+	</div>
+
+	<div class="flight-table-container">
+		<div class="table-inner">
+			<table class="flight-table">
+				<thead>
+					<tr>
+						<th>Vuelo</th>
+						<th>Aerolinea</th>
+						<th>Origen</th>
+						<th>Destino</th>
+						<th>Fecha</th>
+						<th>Hora de salida</th>
+						<th>Hora de llegada</th>
+						<th>Asientos disp</th>
+						<th>Estado</th>
+						<th>Acciones</th>
+					</tr>
+				</thead>
+				<tbody>
+					@if(Vuelos.Any()){
+						foreach(var vuelo in Vuelos)
+						{
+							<tr>
+								<td>@(Aerolineas.Find(e => e.Id_aerolinea == vuelo.Id_aerolinea).Abreviatura + vuelo.Id_vuelo.ToString().PadLeft(5, '0'))</td>
+								<td>@(Aerolineas.Find(e => e.Id_aerolinea == vuelo.Id_aerolinea).Nombre_aerolinea)</td>
+								<td>@(Destinos.Find(e => e.Id_destino == vuelo.Origen).Nombre_destino), 
+									@(Paises.Find( e=> e.Id_Pais == Destinos.Find(e => e.Id_destino == vuelo.Origen).Id_pais).Abreviatura)
+								</td>
+								<td>@(Destinos.Find(e=> e.Id_destino == vuelo.Destino).Nombre_destino), 
+									@(Paises.Find(e => e.Id_Pais == Destinos.Find(e => e.Id_destino == vuelo.Destino).Id_pais).Abreviatura)
+								</td>
+								<td>@vuelo.Fecha_salida.ToShortDateString()</td>
+								<td>@vuelo.Fecha_salida.ToShortTimeString()</td>
+								<td>@vuelo.Fecha_llegada.ToShortTimeString()</td>
+								<td>@vuelo.Asientos</td>
+								@if(vuelo.Estado == "PROGRAMADO")
+								{
+									<td><span class="status-badge status-active">Programado</span></td>
+								}
+								else if(vuelo.Estado == "ACTIVO")
+								{
+									<td><span class="status-badge status-active">Activo</span></td>
+								}
+								else if(vuelo.Estado == "CANCELADO"){
+									<td><span class="status-badge status-pending">Cancelado</span></td>
+								}
+								else
+								{
+									<td><span class="status-badge status-pending">Finalizado</span></td>
+								}
+								<td>
+									<div class="table-actions">
+										@if (vuelo.Estado != "FINALIZADO" && vuelo.Estado != "CANCELADO")
+										{
+											<button class="action-btn" title="Ver Pasajeros" @onclick="@(() => VerBoletos(vuelo))"><i class="fi fi-br-clipboard-user"></i></button>
+											@*<button class="action-btn" title="Editar"><i class="fi fi-rr-edit"></i></button>*@
+											<button class="action-btn delete" @onclick="@(() => Cancelar(vuelo))" title="Eliminar"><i class="fi fi-rr-trash"></i></button>
+										}
+									
+									</div>
+								</td>
+							</tr>
+								
+						}
+					}
+				</tbody>
+			</table>
+		</div>
+		
+	</div>
+	<div class="controlls">
+		<div class="buttons nav-buttons">
+			<button @onclick="@(()=>ChangePage(-1))" disabled="@(currentIndex==1?true:false)"  class=" action-btn previous"><i class="fi fi-br-angle-small-left"></i></button>
+			<span class="counter action-btn next">@currentIndex</span>
+			<button @onclick="@(()=>ChangePage(1))" disabled="@(currentIndex==pages?true : false)" class=" action-btn previous"><i class="fi fi-br-angle-small-right"></i></button>
+		</div>
+
+	</div>
+	<div class="flight-bar">
+		<h3>Horario de vuelos</h3>
+	</div>
+
+	<FlightSchedule vuelos="@AllVuelos" aerolineas="@Aerolineas">
+
+	</FlightSchedule>
+
+	<Modal Displayed="MAddVuelo" DisplayedChanged="@(()=>MAddVuelo = false)">
+		<form @onsubmit="InsertVuelo" method="post">
+			<div class="modal-add-vuelo">
+				<h3>Programar nuevo vuelo</h3>
+				<div class="input-field">
+					<label for="aerolinea">Seleccione una aerolinea</label>
+					<select @bind="CurrentVuelo.Id_aerolinea" id="aerolinea">
+						@foreach (var aerolinea in Aerolineas)
+						{
+							<option value="@aerolinea.Id_aerolinea">@aerolinea.Nombre_aerolinea</option>
+						}
+					</select>
+				</div>
+				<div class="input-group">
+					<div class="input-field">
+						<label for="origen">Origen</label>
+						<select id="origen" @bind="@CurrentVuelo.Origen" @onfocusout="SetOrigen">
+							@foreach (var destino in Destinos)
+							{
+								<option value="@destino.Id_destino">@destino.Nombre_destino</option>
+							}
+						</select>
+					</div>
+					<div class="input-field">
+						<label for="origen">Destino</label>
+						<select id="destino" @bind="CurrentVuelo.Destino">
+							@foreach (var destino in Destinos)
+							{
+								if (destino.Id_destino != CurrentVuelo.Origen)
+								{
+									<option value="@destino.Id_destino">@destino.Nombre_destino</option>
+								}
+
+							}
+						</select>
+					</div>
+				</div>
+				<div class="input-group">
+					<div class="input-field">
+						<label for="salida">Fecha de salida</label>
+						<input id="salida" @bind:event="oninput" @bind="Salida" type="datetime-local" min="@(DateTime.Now.ToString("yyyy-MM-ddThh:mm"))" />
+					</div>
+					<div class="input-field">
+						<label for="llegada">Fecha de llegada</label>
+						<input id="llegada" @bind:event="oninput" @bind="Llegada" type="datetime-local" min="@(CurrentVuelo.Fecha_salida.AddHours(1).ToString("yyyy-MM-ddThh:mm"))" />
+					</div>
+				</div>
+
+				<div class="input-group">
+					<label for="internacional">Internacional</label>
+					<input type="checkbox" @bind="CurrentVuelo.Internacional" />
+				</div>
+				<div class="input-group">
+					<div class="input-field">
+						<label for="tipo">Tipo de vuelo</label>
+						<select id="tipo" @bind="CurrentVuelo.Tipo_Vuelo">
+							<option selected value="DIRECTO">Directo</option>
+							<option value="ESCALA">Escala</option>
+							<option  value="CHARTER">Charter</option>
+						</select>
+					</div>
+					<div class="input-field">
+						<label for="precio">Precio (Bs) (Dolar: @DolarHoy.Promedio Bs)</label>
+						<input type="number" @bind="CurrentVuelo.Precio" max="1000000000" min="1" maxlength="10"/>
+					</div>
+				</div>
+				<div class="input-field">
+					<label for="asientos">Asientos Disponibles</label>
+					<input id="asientos" type="number" @bind="CurrentVuelo.Asientos" max="100" min="1" maxlength="10" />
+				</div>
+				<div class="buttons">
+					<button class="btn cancel expand" type="button" @onclick="@(()=>{MAddVuelo = false; CurrentVuelo = new Vuelo();})">Cancelar</button>
+					<button class="btn expand" type="submit">Programar</button>
+				</div>
+			</div>
+		</form>
+	</Modal>
+	<Modal Displayed="MReservas" DisplayedChanged="@(()=>MReservas = false)">
+		<div class="flight-table-container modal">
+			<div class="table-inner">
+				<table class="flight-table">
+					<thead>
+						<tr>
+							<th>Nombre</th>
+							<th>Apellido</th>
+							<th>DNI</th>
+							<th>Fecha de reserva</th>
+							<th>Estado</th>
+							<th>Metodo de Pago</th>
+							<th>Numero Comprobante</th>
+							<th>Total</th>
+							<th>Acciones</th>
+						</tr>
+					</thead>
+					<tbody>
+						@if(Vuelos.Any()){
+							foreach(var ur  in usuarioReservas)
+							{
+									<tr>
+										<td>@ur.Nombre</td>
+										<td>@ur.Apellido</td>
+										<td>
+											@ur.Dni
+										</td>
+										<td>
+											@ur.Fecha_reserva
+										</td>
+										<td><span class="status-badge status-pending">Pendiente</span></td>
+							
+										<td>@ur.Metodo_pago</td>
+										<td>@ur.Num_comprobante</td>
+										<td>@ur.Monto_total Bs.</td>
+							
+										<td>
+											<div class="table-actions">
+											
+											<button class="action-btn approve" @onclick="@(()=>UpdateReservas(ur,"APROBADO"))" title="Aprobar"><i class="fi fi-br-checkbox"></i></button>
+												<button @onclick="@(()=>VerComprobante(ur))" class="action-btn" title="Ver comprobante"><i class="fi fi-sr-credit-card-eye"></i></button>
+											<button class="action-btn delete" @onclick="@(()=>UpdateReservas(ur,"RECHAZADO"))"  title="Rechazar"><i class="fi fi-br-vote-nay"></i></button>
+											</div>
+										</td>
+									</tr>
+							
+								}
+							}
+						</tbody>
+					</table>
+				</div>
+	
+		</div>
+	</Modal>
+	<Modal Displayed="MPasajeros" DisplayedChanged="@(()=>MPasajeros = false)">
+		<div class="modal-add-vuelo">
+			<div class="flight-table-container">
+				<div class="table-inner">
+					<table class="flight-table">
+						<thead>
+							<tr>
+								<th>Boleto</th>
+								<th>Titular</th>
+								<th>Identificación</th>
+								<th>Pasajeros</th>
+								<th>Abordado</th>
+							</tr>
+						</thead>
+						<tbody>
+							@if(boletos.Any()){
+								foreach(var b in boletos)
+								{
+									<tr>
+										<td>@(b.Abreviatura + b.Id_boleto.PadLeft(5,'0'))</td>
+										<td>@b.Nombre @b.Apellido</td>
+										<td>@b.Dni</td>
+										<td>@(b.Ninos+b.Adultos)</td>
+										<td><input type="checkbox" @onchange="@((args)=>Abordar(args, b.Id_boleto))" value="@b.Check" /></td>
+									</tr>
+								}
+							}
+							else
+							{
+								<tr>
+									<td style="text-align: center;" colspan="5">Este vuelo aún no tiene pasajeros</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</Modal>
+</section>
+
+<Modal Displayed="MComprobante" DisplayedChanged="@(()=>MComprobante = false)">
+	<img src="@urlImagen" alt="" />
+</Modal>
+
+@code {
+
+	public bool MAddVuelo { get; set; } = false;
+	public bool MReservas { get; set; } = false;
+	public bool MComprobante { get; set; } = false;
+	public bool MPasajeros { get; set; } = false;
+
+	public string urlImagen = "";
+	public int currentIndex { get; set; } = 1;
+	public int pages { get; set; }
+	public int max { get; set; } = 5;
+
+
+	public List<Vuelo> Vuelos { get; set; } = new List<Vuelo>();
+	public List<Vuelo> AllVuelos { get; set; } = new List<Vuelo>();
+	public List<Destino> Destinos { get; set; } = new List<Destino>();
+	public List<Aerolinea> Aerolineas { get; set; } = new List<Aerolinea>();
+	public List<Pais> Paises { get; set; } = new List<Pais>();
+	public List<UsuarioReserva> usuarioReservas = new List<UsuarioReserva>();
+	public List<UserBol> boletos = new List<UserBol>();
+
+	public List<string> Stats = new List<string>() { "", "", "" };
+	public Dolar DolarHoy { get; set; }
+
+	public Vuelo CurrentVuelo = new Vuelo();
+	public DateTime Salida { get => CurrentVuelo.Fecha_salida; set { CurrentVuelo.Fecha_salida = value; CurrentVuelo.Fecha_llegada = CurrentVuelo.Fecha_salida.AddHours(1); } }
+	public DateTime Llegada { get => CurrentVuelo.Fecha_llegada; set
+		{
+			if(CurrentVuelo.Fecha_salida>=value)
+			{
+				CurrentVuelo.Fecha_llegada = CurrentVuelo.Fecha_salida.AddHours(1);
+			}
+			else
+			{
+				CurrentVuelo.Fecha_llegada = value;
+			}
+
+		} }
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			Destinos = (await conn.QueryAsync<Destino>("SELECT * FROM DESTINOS")).ToList();
+			int cV = await conn.QueryFirstAsync<int>("SELECT COUNT(*) FROM VUELOS");
+			pages = cV / max;
+			if (cV % max > 0)
+			{
+				pages += 1;
+			}
+			conn.Execute(@"UPDATE VUELOS SET ESTADO = 'ACTIVO' WHERE CURRENT_TIMESTAMP BETWEEN FECHA_SALIDA AND FECHA_LLEGADA");
+			conn.Execute(@"UPDATE VUELOS SET ESTADO = 'FINALIZADO' WHERE CURRENT_TIMESTAMP > FECHA_LLEGADA"); 
+			Aerolineas = (await conn.QueryAsync<Aerolinea>("SELECT * FROM AEROLINEAS")).ToList();
+			Vuelos = (await conn.QueryAsync<Vuelo>("SELECT * FROM VUELOS ORDER BY ID_VUELO ASC OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY")).ToList();
+			AllVuelos = (await conn.QueryAsync<Vuelo>("SELECT * FROM VUELOS ORDER BY ID_VUELO ASC")).ToList();
+
+			
+			Paises = (await conn.QueryAsync<Pais>("SELECT * FROM PAIS")).ToList();
+			usuarioReservas = (await conn.QueryAsync<UsuarioReserva>("SELECT * FROM USUARIO_RESERVA")).ToList();
+
+			Stats = new List<string>()
+			{
+				(await conn.QueryFirstAsync<string>("SELECT COUNT(*) FROM VUELOS WHERE ESTADO = 'PROGRAMADO' ")),
+				usuarioReservas.Count.ToString(),
+				AllVuelos.Count(e=>e.Estado == "CANCELADO").ToString()
+			};
+			DolarHoy = await dolarService.GetDolarAsync();
+			StateHasChanged();
+		}catch(Exception ex)
+		{
+			Console.WriteLine($"Error {ex.Message}");
+		}
+
+	}
+
+	private void Filtrar(ChangeEventArgs args)
+	{
+
+	}
+
+	private void AgregarVuelo(MouseEventArgs args)
+	{
+		if (!Aerolineas.Any())
+		{
+			JS.InvokeVoidAsync("alert", "No hay aerolineas registradas, añada alguna para continuar");
+			return;
+		}
+		if (!Destinos.Any() || Destinos.Count<1)
+		{
+			JS.InvokeVoidAsync("alert", "No hay Destinos registrados, añada alguno para continuar");
+			return;
+		}
+		CurrentVuelo.Id_aerolinea = Aerolineas[0].Id_aerolinea;
+		CurrentVuelo.Origen = Destinos[0].Id_destino;
+		CurrentVuelo.Destino = Destinos[1].Id_destino;
+		CurrentVuelo.Fecha_salida = DateTime.Now;
+		CurrentVuelo.Fecha_llegada = DateTime.Now.AddHours(1);
+		MAddVuelo = true;
+		StateHasChanged();
+	}
+	private async Task SetOrigen()
+	{
+		StateHasChanged();
+	}
+
+	private async Task InsertVuelo(EventArgs args)
+	{
+		try
+		{
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			string sql = "INSERT INTO VUELOS (ID_AEROLINEA, ORIGEN, DESTINO, FECHA_SALIDA, FECHA_LLEGADA, INTERNACIONAL, TIPO_VUELO, PRECIO, ASIENTOS) " +
+				"VALUES (@Id_aerolinea, @Origen, @Destino, @Fecha_salida, @Fecha_llegada, @Internacional, @Tipo_Vuelo, @Precio, @Asientos);";
+			await conn.ExecuteAsync(sql, CurrentVuelo);
+			await JS.InvokeVoidAsync("alert", "Vuelo Programado exitosamente");
+			CurrentVuelo = new Vuelo();
+			Vuelos = (await conn.QueryAsync<Vuelo>("SELECT * FROM VUELOS")).ToList();
+			MAddVuelo = false;
+		}
+		catch(FbException fbex)
+		{
+			if(fbex.ErrorCode == 335544665)
+			{
+				await JS.InvokeVoidAsync("alert", $"Ya existe un vuelo programado en esa hora y fecha saliendo del mismo origen");
+			}
+			else
+			{
+				await JS.InvokeVoidAsync("alert", $"{fbex.Message}");
+			}
+
+		}
+		catch(Exception ex)
+		{
+			await JS.InvokeVoidAsync("alert", $"Error {ex.Message}");
+		}
+
+	}
+	private async Task ShowReservas()
+	{
+		MReservas = true;
+
+		StateHasChanged();
+
+	}
+
+	private async Task UpdateReservas(UsuarioReserva ur, string accion)
+	{
+		try
+		{
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			if (accion == "RECHAZADO")
+			{
+				await conn.ExecuteAsync("UPDATE RESERVAS SET ESTADO = @Estado WHERE ID_RESERVA = @Id_reserva", new
+				{
+					Estado = accion,
+					Id_reserva = ur.Id_reserva
+				});
+
+
+				usuarioReservas = (await conn.QueryAsync<UsuarioReserva>("SELECT * FROM USUARIO_RESERVA")).ToList();
+				await JS.InvokeVoidAsync("alert", "Actualizado");
+				await ActualizarStats();
+				StateHasChanged();
+
+			}
+			else
+			{
+				await conn.ExecuteAsync("UPDATE RESERVAS SET ESTADO = @Estado WHERE ID_RESERVA = @Id_reserva", new
+				{
+					Estado = accion,
+					Id_reserva = ur.Id_reserva
+				});
+				DateTime FechaV = await conn.QueryFirstAsync<DateTime>("SELECT FECHA_LLEGADA FROM VUELOS WHERE ID_VUELO = @Id", new { Id = ur.Id_vuelo });
+				await conn.ExecuteAsync(@"INSERT INTO BOLETOS(ID_USER, ID_RESERVA, ID_VUELO, FECHA_VENCIMIENTO) VALUES(
+										@Id_user, @Id_reserva, @Id_Vuelo, @Fecha_vencimiento)", new{Id_user = ur.Id_user, Id_reserva = ur.Id_reserva, Id_vuelo = ur.Id_vuelo, Fecha_vencimiento = FechaV});
+				await JS.InvokeVoidAsync("alert","Actualizado");
+
+				usuarioReservas = (await conn.QueryAsync<UsuarioReserva>("SELECT * FROM USUARIO_RESERVA")).ToList();
+				await ActualizarStats();
+				StateHasChanged();
+
+			}
+		}catch(Exception ex)
+		{
+
+			await JS.InvokeVoidAsync("alert", $"Ocurrio un error {ex.Message}");
+		}
+
+
+	}
+	private async Task VerComprobante(UsuarioReserva ur)
+	{
+		urlImagen = ur.GetImgUrl();
+		MComprobante = true;
+
+		StateHasChanged();
+	}
+
+	private async Task ActualizarStats()
+	{
+		Stats = new List<string>()
+		{
+			Vuelos.Count(e=>e.Estado == "PROGRAMADO").ToString(),
+			usuarioReservas.Count.ToString(),
+			Vuelos.Count(e=>e.Estado == "CANCELADO").ToString()
+		};
+	}
+
+	public async Task ChangePage(int i)
+	{
+		currentIndex += i;
+		try
+		{
+
+
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			Vuelos = (await conn.QueryAsync<Vuelo>("SELECT * FROM VUELOS ORDER BY ID_VUELO ASC OFFSET @Rows ROWS FETCH NEXT @Max ROWS ONLY;", new { Rows=((currentIndex-1)*max), Max = max})).ToList();
+			StateHasChanged();
+		}
+		catch(Exception ex)
+		{
+			Console.WriteLine($"Error {ex.Message}");
+		}
+	}
+	private async Task Cancelar(Vuelo v)
+	{
+		try
+		{
+
+
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			conn.Execute("UPDATE VUELOS SET ESTADO = 'CANCELADO' WHERE ID_VUELO = @Id", new { Id = v.Id_vuelo });
+			Vuelos = (await conn.QueryAsync<Vuelo>("SELECT * FROM VUELOS ORDER BY ID_VUELO ASC OFFSET @Rows ROWS FETCH NEXT @Max ROWS ONLY;", new { Rows = ((currentIndex - 1) * max), Max = max })).ToList();
+			StateHasChanged();
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error {ex.Message}");
+		}
+	}
+	public async Task VerBoletos(Vuelo v)
+	{
+		try
+		{
+			FbConnection conn = await databaseConnection.GetConnectionAsync();
+			boletos = (await conn.QueryAsync<UserBol>(@"SELECT B.ID_BOLETO, B.NOMBRE, B.APELLIDO, B.ABREVIATURA, B.DNI, B.""CHECK"", B.ADULTOS, B.NINOS FROM BOLETO_INFO AS B INNER JOIN VUELOS AS V ON V.ID_VUELO = B.ID_VUELO AND V.ID_VUELO = @Id",new { Id=v.Id_vuelo})).ToList();
+			MPasajeros = true;
+		}catch(Exception ex)
+		{
+			await JS.InvokeVoidAsync("alert", $"Error{ex.Message}");
+		}
+
+	}
+
+	public class UserBol
+	{
+		public string? Id_boleto { get; set; }
+		public string? Nombre { get; set; }
+		public string? Apellido { get; set; }
+		public string? Abreviatura { get; set; }
+		public string? Dni { get; set; }
+		public int Adultos{ get; set; }
+		public int Ninos { get; set; }
+		public bool Check { get; set; }
+	}
+	private async Task Abordar(ChangeEventArgs args, string id)
+	{
+		await JS.InvokeVoidAsync("alert", $"Valor: {args.Value} Boleto: {id}");
+	}
+}

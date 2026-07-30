@@ -1,0 +1,28 @@
+﻿<div class="package">
+	<div class="image-price">
+		<img src="@(PackageData.Detalles ?? "imgs/mgta.webp")" alt="Alternate Text" />
+		<div class="precio">
+			<span>@PackageData.Precio$</span>
+		</div>
+	</div>
+	
+	<h4>@PackageData?.Nombre_paquete</h4>
+	<ul>
+		<li>Destino: </li>
+		<li>Adipiscing elit fusce.</li>
+		<li>Vel sapien elit.</li>
+		<li>In malesuada semper.</li>
+		<li>Mi, id sollicitudin.</li>
+	</ul>
+	@ChildContent
+
+</div>
+
+@code {
+	[Parameter]
+	public RenderFragment? ChildContent { get; set; }
+	[Parameter]
+	public Paquete? PackageData { get; set; }
+	
+
+}

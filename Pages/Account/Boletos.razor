@@ -1,0 +1,338 @@
+﻿@page "/Profile/Tickets"
+@inject IDatabaseConnection databaseConnection
+@inject IJSRuntime JS
+@attribute [Authorize(Roles = "USER")]
+@layout Dashboard
+<PageTitle>Boletos</PageTitle>
+<section class="tickets-section">
+	<div class="banner">
+        <h5>Bolestos activos</h5>
+		<h3>Tus boletos</h3>
+    </div>
+    <TicketContainer Title="Boletos Activos">
+
+
+        <article class="active-tickets">
+            @if (tickets.Any())
+            {
+                foreach (var t in tickets.FindAll(e=>e.Fecha_vencimiento>DateTime.Now))
+                {
+                    <div class="ticket">
+                        <div class="ticket-header" style="background-image: linear-gradient(to bottom right, @t.ColorDegradado(), @t.Color, @t.ColorDegradadoOscuro());">
+                            <div class="airline-logo">
+                                <div class="logo-circle">
+                                    <div class="logo-placeholder" style="background: linear-gradient(to bottom right, @t.ColorDegradado(), @t.Color, @t.ColorDegradadoOscuro());">@t.Abreviatura</div>
+                                </div>
+                                <div class="airline-name">@t.Nombre_aerolinea</div>
+                            </div>
+                            <div class="ticket-code-section">
+                                <div class="ticket-code">@(t.Abreviatura + t.Id_boleto.ToString().PadLeft(5, '0'))</div>
+                                <div class="qr-container">
+                                    <img class="qr-placeholder" src="@t.GetQr()" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flight-info">
+                            <div class="route">
+                                <div class="airport">
+                                    <div class="airport-code">@(destinos.Find(e => e.Id_destino == t.Origen).Abreviatura)</div>
+                                    <div class="airport-name">@(destinos.Find(e => e.Id_destino == t.Origen).Nombre_destino)</div>
+                                    <div class="airport-name">@t.Fecha_salida.ToShortDateString()</div>
+                                    <div class="airport-name">@t.Fecha_salida.ToShortTimeString()</div>
+                                </div>
+                                <div class="route-arrow">
+                                    <div class="arrow-line"></div>
+                                    <div class="flight-duration">@((t.Fecha_llegada - t.Fecha_salida).TotalHours) hr</div>
+                                </div>
+                                <div class="airport">
+                                    <div class="airport-code">@(destinos.Find(e => e.Id_destino == t.Destino).Abreviatura)</div>
+                                    <div class="airport-name">@(destinos.Find(e => e.Id_destino == t.Destino).Nombre_destino)</div>
+                                    <div class="airport-name">@t.Fecha_llegada.ToShortDateString()</div>
+                                    <div class="airport-name">@t.Fecha_llegada.ToShortTimeString()</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="passenger-info">
+                            <div class="info-group">
+                                <div class="info-label">Titular</div>
+                                <div class="info-value">@t.Nombre  @t.Apellido</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">DNI</div>
+                                <div class="info-value">@t.Dni</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Nacionalidad</div>
+                                <div class="info-value">@t.Nacionalidad -</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Pasajeros</div>
+                                <div class="info-value">@(t.Adultos + t.Ninos)</div>
+                            </div>
+                        </div>
+                        <div class="ticket-footer">
+                            <div class="expiration">
+                                <div class="expiration-icon">
+                                    <i class="fi fi-br-clock-five"></i>
+                                </div>
+                                <div class="expiration-text">
+                                    <h4>Válido hasta</h4>
+                                    <p>@(t.Fecha_vencimiento.ToShortDateString())</p>
+                                </div>
+                            </div>
+
+                        </div>
+                        @if (t.Check)
+                        {
+                            <img class="sello" src="/imgs/Sello.png" />
+                        }
+                      
+                    </div>
+                }
+
+
+            }
+            else
+            {
+                <div class="no-element">
+                    <img src="/imgs/billete-electronico.gif" />
+                    <h4>Aún no tienes boletos</h4>
+                </div>
+            }
+
+        </article>
+    </TicketContainer>
+	<TicketContainer Title="Boletos Anteriores">
+        <article class="active-tickets old">
+            @if (tickets.Any())
+            {
+                foreach (var t in tickets.FindAll(e => e.Fecha_vencimiento < DateTime.Now))
+                {
+                    <div class="ticket">
+                        <div class="ticket-header" style="background-image: linear-gradient(to bottom right, @t.ColorDegradado(), @t.Color, @t.ColorDegradadoOscuro());">
+                            <div class="airline-logo">
+                                <div class="logo-circle">
+                                    <div class="logo-placeholder" style="background: linear-gradient(to bottom right, @t.ColorDegradado(), @t.Color, @t.ColorDegradadoOscuro());">@t.Abreviatura</div>
+                                </div>
+                                <div class="airline-name">@t.Nombre_aerolinea</div>
+                            </div>
+                            <div class="ticket-code-section">
+                                <div class="ticket-code">@(t.Abreviatura + t.Id_boleto.ToString().PadLeft(5, '0'))</div>
+                                <div class="qr-container">
+                                    <img class="qr-placeholder" src="@t.GetQr()" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flight-info">
+                            <div class="route">
+                                <div class="airport">
+                                    <div class="airport-code">@(destinos.Find(e => e.Id_destino == t.Origen).Abreviatura)</div>
+                                    <div class="airport-name">@(destinos.Find(e => e.Id_destino == t.Origen).Nombre_destino)</div>
+                                    <div class="airport-name">@t.Fecha_salida.ToShortDateString()</div>
+                                    <div class="airport-name">@t.Fecha_salida.ToShortTimeString()</div>
+                                </div>
+                                <div class="route-arrow">
+                                    <div class="arrow-line"></div>
+                                    <div class="flight-duration">@((t.Fecha_llegada - t.Fecha_salida).TotalHours) hr</div>
+                                </div>
+                                <div class="airport">
+                                    <div class="airport-code">@(destinos.Find(e => e.Id_destino == t.Destino).Abreviatura)</div>
+                                    <div class="airport-name">@(destinos.Find(e => e.Id_destino == t.Destino).Nombre_destino)</div>
+                                    <div class="airport-name">@t.Fecha_llegada.ToShortDateString()</div>
+                                    <div class="airport-name">@t.Fecha_llegada.ToShortTimeString()</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="passenger-info">
+                            <div class="info-group">
+                                <div class="info-label">Titular</div>
+                                <div class="info-value">@t.Nombre  @t.Apellido</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">DNI</div>
+                                <div class="info-value">@t.Dni</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Nacionalidad</div>
+                                <div class="info-value">@t.Nacionalidad -</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Pasajeros</div>
+                                <div class="info-value">@(t.Adultos + t.Ninos)</div>
+                            </div>
+                        </div>
+                        <div class="ticket-footer">
+                            <div class="expiration">
+                                <div class="expiration-icon">
+                                    <i class="fi fi-br-clock-five"></i>
+                                </div>
+                                <div class="expiration-text">
+                                    <h4>Válido hasta</h4>
+                                    <p>@(t.Fecha_vencimiento.ToShortDateString())</p>
+                                </div>
+                            </div>
+                            @if (!t.Check)
+                            {
+                                <div class="ticket-status expired">
+                                    EXPIRADO
+                                </div>
+                            }
+
+                        </div>
+                        @if (t.Check)
+                        {
+                            <img class="sello" src="/imgs/Sello.png" />
+                        }
+
+                    </div>
+                }
+
+
+            }
+            else
+            {
+                <div class="no-element">
+                    <img src="/imgs/billete-electronico.gif" />
+                    <h4>No tienes boletos anteriores</h4>
+                </div>
+            }
+        </article>
+    </TicketContainer>
+    <TicketContainer Title="Pases de Paquetes">
+        <article class="active-tickets">
+            @if (paquetes.Any())
+            {
+                foreach(var p in paquetes)
+                {
+                    <div class="tour-pass minimalist-pass">
+                        <div class="minimalist-header">
+                            <h2>FlightPal</h2>
+                            <div class="minimalist-code">@("PCK" +"-"+ p.Id_reserva_p.ToString().PadLeft(5,'0')+"-"+ @p.Id_pase.ToString())</div>
+                        </div>
+
+                        <div class="minimalist-content">
+                            <div class="minimalist-package-name">
+                                @p.Nombre_paquete
+                            </div>
+
+                            <div class="minimalist-section">
+                                <div class="minimalist-section-title">Información del Viajero</div>
+                                <div class="minimalist-info-item">
+                                    <div class="minimalist-label">Nombre:</div>
+                                    <div class="minimalist-value">@p.Nombre @p.Apellido</div>
+                                </div>
+
+                                <div class="minimalist-info-item">
+                                    <div class="minimalist-label">Salida:</div>
+                                    <div class="minimalist-value">@p.Fecha_salida.ToShortDateString()</div>
+                                </div>
+                                <div class="minimalist-info-item">
+                                    <div class="minimalist-label">Personas:</div>
+                                    <div class="minimalist-value">@p.Personas</div>
+                                </div>
+                            </div>
+
+                            <div class="minimalist-section">
+                                <div class="minimalist-section-title">Detalles del Paquete</div>
+                                <div class="minimalist-info-item">
+                                    <div class="minimalist-label">Destinos:</div>
+                                    <div class="minimalist-value">@p.Nombre_destino</div>
+                                </div>
+                                <div class="minimalist-info-item">
+                                    <div class="minimalist-label">Categoría:</div>
+                                    @if (p.Monto_total/p.Personas <= 35000)
+                                    {
+                                        <div class="minimalist-value">Económica</div>
+                                    }else if(p.Monto_total>35000 && p.Monto_total/p.Personas <= 70000)
+                                    {
+                                        <div class="minimalist-value">Primera clase</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="minimalist-value">Premium</div>
+                                    }
+                                </div>
+                                <div class="minimalist-info-item">
+                                    <div class="minimalist-label">Precio total:</div>
+                                    <div class="minimalist-value minimalist-highlight">@p.Monto_total Bs.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="minimalist-footer">
+                            <div>
+                                <div>
+                                    <div style="font-size: 0.8rem; color: #718096; margin-top: 5px;">PT-MEDIT-789</div>
+                                </div>
+                                <div class="minimalist-qr">
+                                   <img src="@p.GetQr()" alt="" />
+                                </div>
+                                @if (p.Fecha_salida < DateTime.Now)
+                                {
+                                    <div class="ticket-status expired pase">
+                                        EXPIRADO
+                                    </div>
+                                }
+                              
+                            </div>
+                        </div>
+                    </div>
+
+                }
+              
+            }
+            else
+            {
+                <div class="no-element">
+                    <img src="/imgs/billete-electronico.gif" />
+                    <h4>Aún no tienes boletos</h4>
+                </div>
+            }
+
+        </article>
+    </TicketContainer>
+
+
+
+</section>
+@code {
+    public string Nombre { get; set; }
+    public string Apellido { get; set; }
+    public List<BoletoInfo> tickets { get; set; } = new List<BoletoInfo>();
+    public List<DestinoPais> destinos { get; set; } = new List<DestinoPais>();
+    public List<PaseInfo> paquetes { get; set; } = new List<PaseInfo>();
+
+    public int Id_user { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var autenticationState = await authenticationStateTask!;
+            foreach (var c in autenticationState.User.Claims)
+            {
+                if (c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid")
+                {
+                    Id_user = int.Parse(c.Value);
+                }
+
+            }
+            FbConnection conn = await databaseConnection.GetConnectionAsync();
+            tickets = (await conn.QueryAsync<BoletoInfo>("SELECT * FROM BOLETO_INFO WHERE ID_USER = @Id", new { Id = Id_user })).ToList();
+            destinos = (await conn.QueryAsync<DestinoPais>("SELECT * FROM DESTINO_PAIS")).ToList();
+            paquetes = (await conn.QueryAsync<PaseInfo>("SELECT * FROM PASE_INFO WHERE ID_USER = @Id", new { Id = Id_user })).ToList();
+
+
+        }
+        catch(Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Ocurrio un error {ex.Message}");
+        }
+
+
+	}
+	
+}

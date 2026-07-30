@@ -1,0 +1,105 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager NavManager
+@using FlightPal.Shared
+
+<style>
+
+</style>
+
+<nav class="nav-bar">
+    <div class="img-section">
+        <a href="">
+            <img src="/imgs/FlightPalLogo.png" height="40" alt="Alternate Text" />
+        </a>
+        <a href="" class="principal-a">
+            <h2>FlightPal</h2>
+        </a>
+        
+
+    </div>
+    <div class="nav-section">
+        <NavLink class="nav-link" ActiveClass="activo" href="vuelos" Match="NavLinkMatch.All">Vuelos</NavLink>
+        <NavLink class="nav-link" ActiveClass="activo" href="tarifas" Match="NavLinkMatch.All">Paquetes</NavLink>
+        <NavLink class="nav-link" ActiveClass="activo" href="blog" Match="NavLinkMatch.All">Blog</NavLink>
+       
+       
+
+        
+        <NavLink class="nav-icon" ActiveClass="activo" href="vuelos" Match="NavLinkMatch.All"><i class="fi fi-sr-plane"></i></NavLink>
+        <NavLink class="nav-icon" ActiveClass="activo" href="tarifas" Match="NavLinkMatch.All"><i class="fi fi-ss-brand"></i></NavLink>
+        <NavLink class="nav-icon" ActiveClass="activo" href="blog" Match="NavLinkMatch.All"><i class="fi fi-sr-blog-text"></i></NavLink>
+       
+        <AuthorizeView Roles="USER">
+            <Authorized>
+                <NavLink class="nav-link" ActiveClass="activo" href="Profile/Tickets" Match="NavLinkMatch.All">Boletos</NavLink>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView >
+            <Authorized >
+                <a href="/Profile"> <img src="/imgs/avatar.png" /></a>
+            </Authorized>
+            <NotAuthorized>
+                <a href="login"> <img src="/imgs/user.png" /></a>
+            </NotAuthorized>
+        </AuthorizeView>
+        <button class="nav-menu-button"></button>
+        
+
+    </div>
+   
+</nav>
+<div>
+
+    @Body
+
+</div>
+
+<footer>
+	<section class="isologo">
+        <h2>FlightPal</h2>
+
+    </section>
+   <Accordion Title="Servicios">
+       <a href="#">Preguntas frecuentes</a>
+       <a href="#">Sobre Nosotros</a>
+   </Accordion>
+    <Accordion Title="Empresa">
+        <a href="#">Preguntas frecuentes</a>
+        <a href="#">Sobre Nosotros</a>
+    </Accordion>
+    <Accordion Title="Información útil">
+        <a href="#">Preguntas frecuentes</a>
+        <a href="#">Sobre Nosotros</a>
+    </Accordion>
+
+	<section class="social-section">
+        <h5>Siguenos</h5>
+		<div class="social-media">
+            <i class="fi fi-brands-facebook"></i>
+            <i class="fi fi-brands-twitter-alt"></i>
+            <i class="fi fi-brands-instagram"></i>
+            <i class="fi fi-brands-youtube"></i>
+
+        </div>
+    </section>
+
+</footer>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code{
+    public string? HomePageURI { get; set; }
+    //tengo que cambiarlo despues de implementar el login
+    public bool UserLoged { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        HomePageURI = NavManager.BaseUri;
+    }
+
+
+}

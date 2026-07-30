@@ -1,0 +1,33 @@
+﻿<div class="preview-card" @onclick="()=>{ContentVisible=!ContentVisible;}" style="max-width: @MaxW">
+	<div class="preview-image" id="previewImage">
+		@if (Publi.Imagen_url != "-")
+		{
+
+		}
+		else
+		{
+			<i class="fi fi-rr-newspaper"></i>
+		}
+
+	</div>
+	<div class="preview-content">
+		<div class="preview-meta">
+			<span class="preview-category" id="previewCategory">@Publi.Categoria.ToLower()</span>
+			<span id="previewDate">@Publi.Fecha_publicacion.ToShortDateString()</span>
+		</div>
+		<h3 class="preview-title" id="previewTitle">@Publi.Titulo</h3>
+		<div class="preview-excerpt @(ContentVisible ? "show-text" : "")">
+			@((MarkupString)Publi.Contenido)
+		</div>
+		<div class="preview-footer">
+			<span id="previewAuthor">Por: FlightPal®</span>
+		</div>
+	</div>
+</div>
+@code {
+	[Parameter]
+	public Publicacion? Publi { get; set; }
+	public bool ContentVisible { get; set; } = false;
+	[Parameter]
+	public string MaxW { get; set; } = "";
+}

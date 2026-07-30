@@ -1,0 +1,73 @@
+﻿.package{
+    margin-top: 5rem;
+    display: flex;
+    flex-direction: column;
+    padding: 8rem 1rem 2rem 1rem;
+    border-radius: .8rem;
+    background-color: white;
+    text-align: left;
+    font-family: Montserrat;
+    position: relative;
+    min-width: 256px;
+    width: 20%;
+    gap: 1.5rem;
+    box-shadow: rgba(0,0,0,0.25) 1px 3px;
+}
+
+.package .image-price{
+    width: 100%;
+    max-width: calc(256px - 2rem);
+    aspect-ratio: 1/0.7;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(-30%) translateX(-50%);
+    border-radius: .8rem;
+
+}
+
+
+.image-price img{
+    width: 100%;
+    aspect-ratio: 1/0.7;
+}
+
+.image-price .precio {
+    display: flex;
+    background-color: #FFC400;
+    width: 100%;
+    aspect-ratio: 1/0.7;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    font-family: Montserrat;
+    transition: transform 1s ease;
+    border-radius: .8rem;
+    padding: 1rem;
+}
+
+.image-price:hover .precio{
+    transform: translateY(-100%);
+}
+
+.package button {
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: .7rem;
+    color: white;
+    background-color: #202447;
+    cursor: pointer;
+    transition: all ease .5s;
+}
+.package button:hover{
+    background-color: #193B89;
+
+}
+.precio span{
+    font-size: 1.5rem;
+    font-weight: 600;
+}

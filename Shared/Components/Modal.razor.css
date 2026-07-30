@@ -1,0 +1,67 @@
+﻿.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(20, 20, 20, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.modal-window{
+    background-color: white;
+    padding: 2.2rem;
+    border-radius: 15px;
+    position: relative;
+    opacity: 0;
+    animation: appear .5s ease forwards;
+    transition: all 1s ease;
+    display: flex;
+    max-width: 80%;
+    overflow: hidden;
+}
+
+@keyframes appear{
+    from{
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to{
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
+
+.close-button{
+    position: absolute;
+    top: 0.8rem;
+    left: 0.8rem;
+    cursor: pointer;
+    font-size: clamp(0.5rem, 1vw, 2rem);
+}
+
+
+.close-button:hover{
+    color: red;
+}
+
+.closing{
+    animation: disappear 1s forwards;
+    transition: opacity 1s ease;
+}
+
+@keyframes disappear{
+    from{
+        opacity: 1;
+
+    }
+    to{
+        opacity: 0;
+    }
+}

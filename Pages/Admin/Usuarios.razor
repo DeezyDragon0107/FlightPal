@@ -1,0 +1,321 @@
+﻿@page "/admin/users"
+@layout Dashboard
+@inject IDatabaseConnection connection
+@attribute [Authorize(Roles = "ADMIN")]
+@inject IJSRuntime JS
+<PageTitle>Usuarios</PageTitle>
+<article class="users">
+    <section class="title-section">
+        <div class="title-text">
+            <h2>
+                Administrar Usuarios
+            </h2>
+            <p>Administra los usuarios registrados en flightpal</p>
+        </div>
+        <div class="image-title">
+
+        </div>
+       
+    </section>
+    <div class="cards-container">
+        <section class="cards">
+            <StatCard Nombre="Cantidad de usuarios" Numero="@UsersQ.ToString()" Color="Aliceblue" IconColor="Blue">
+                <i class="fi fi-br-users-alt"></i>
+            </StatCard>
+            <StatCard Nombre="Usuarios activos" Numero="@ActiveUsers.ToString()" Color="Aliceblue" IconColor="Blue">
+                <i class="fi fi-br-users-alt"></i>
+            </StatCard>
+            <StatCard Nombre="Nuevos Usuarios" Numero="@NewUsers.ToString()" Color="Aliceblue" IconColor="Blue">
+                <i class="fi fi-br-users-alt"></i>
+            </StatCard>
+        </section>
+    </div>
+
+	<section class="table-section">
+        <div class="table-container">
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th data-sort="name" @onclick="OrderB">
+                            Nombre
+                            <span class="sort-icons"></span>
+                        </th>
+                        <th data-sort="email">
+                            Email
+                            <span class="sort-icons"></span>
+                        </th>
+                        <th data-sort="role">
+                            Rol
+                            <span class="sort-icons"></span>
+                        </th>
+                        <th data-sort="status">
+                            Estado
+                            <span class="sort-icons"></span>
+                        </th>
+                        <th data-sort="date">
+                            Fecha Registro
+                            <span class="sort-icons"></span>
+                        </th>
+                        <th data-sort="dni">
+                            DNI
+                            <span class="sort-icons"></span>
+                        </th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody">
+                    @if(user.Any())
+                    {
+                        foreach(var u in user)
+                        {
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar" style="background-color: #@(colores[random.Next(0,4)])">
+                                        @u.Nombre[0]@u.Apellido[0]
+                                    </div>
+                                    <div class="user-info">
+                                        <span class="user-name">@u.Nombre @u.Apellido</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="user-email">@u.Email</div>
+                            </td>
+                            <td>
+                                <span class="role @u.Role">
+                                    @u.Role
+                                </span>
+                            </td>
+								<td>
+                                    <span class="status @(u.Estado?"active":"inactive")">
+                                        @(u.Estado?"Activo":"Inactivo")
+                                    </span>
+                                </td>
+                            <td>@u.Fecha_registro.ToString("dd/MM/yyyy")</td>
+							<td>@u.Nacionalidad- @u.Dni</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn edit" data-id="" title="Editar">
+                                            <i class="fi fi-br-edit"></i>
+                                    </button>
+                                    <button class="action-btn delete" data-id="" title="Eliminar" @onclick="@(()=>Delete(u))">
+                                            <i class="fi fi-br-trash-xmark"></i>
+                                    </button>
+                                    <button @onclick="@(()=>VerInfo(u))" class="action-btn" data-id="" title="Ver detalles">
+                                            <i class="fi fi-br-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+						}
+                    }
+                </tbody>
+
+               
+            </table>
+        </div>
+    </section>
+  
+
+</article>
+
+<Modal Displayed="ModalEliminar" DisplayedChanged="CerrarModal">
+	<div class="modal-eliminar">
+		<h3>¿Está seguro que desea eliminar este usuario?</h3>
+        <p>Esta acción es irreversible!</p>
+        <div class="buttons">
+            <button class="btn cancel" @onclick="CerrarModal">Cancelar</button>
+            <button class="btn" @onclick="@(Eliminar)">Eliminar</button>
+        </div>
+    </div>
+
+</Modal>
+<Modal Displayed="MInfo" DisplayedChanged="@(()=>MInfo=false)">
+	<div class="modal-eliminar">
+        <div class="user-header">
+            <div class="user-avatar large" style="background-color: #@(colores[random.Next(0, 4)]);">
+                @currentUser.Nombre[0]@currentUser.Apellido[0]
+            </div>
+            <div class="info-item">
+                <h4>@currentUser.Nombre @currentUser.Apellido</h4>
+				<div class="user-email">@currentUser.Email</div>
+            </div>
+            <div class="info-item">
+				<span class="role @currentUser.Role">
+                    @currentUser.Role
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="status @(currentUser.Estado ? "active" : "inactive")">@(currentUser.Estado ? "Activo" : "inactivo")</span>
+            </div>
+        </div>
+
+        <div class="tabla-reservas">
+            <div class="table-inner">
+                <table class="flight-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>DNI</th>
+                            <th>Fecha de reserva</th>
+                            <th>Estado</th>
+                            <th>Metodo de Pago</th>
+                            <th>Numero Comprobante</th>
+                            <th>Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (usuarioReservas.Any())
+                        {
+                            foreach (var ur in usuarioReservas)
+                            {
+                                <tr>
+                                    <td>@ur.Nombre</td>
+                                    <td>@ur.Apellido</td>
+                                    <td>
+                                        @ur.Dni
+                                    </td>
+                                    <td>
+                                        @ur.Fecha_reserva
+                                    </td>
+                                    <td><span class="status @(ur.Estado == "PENDIENTE" ? "pending" : "") @(ur.Estado == "APROBADO" ? "active" : "") @(ur.Estado == "RECHAZADO" ? "inactive" : "")">@ur.Estado</span></td>
+
+                                    <td>@ur.Metodo_pago</td>
+                                    <td>@ur.Num_comprobante</td>
+                                    <td>@ur.Monto_total Bs.</td>
+
+                                    <td>
+                                        <div class="table-actions">
+                                        
+                                            <button @* @onclick="@(() => VerComprobante(ur))"*@ class="action-btn" title="Ver comprobante"><i class="fi fi-sr-credit-card-eye"></i></button>
+                                           
+                                            @if(ur.Estado == "APROBADO" || ur.Estado == "RECHAZADO")
+                                            {
+                                                
+                                            }
+                                            else
+                                            {
+                                                <button class="action-btn approve" @*onclick="@(() => UpdateReservas(ur, "APROBADO"))"*@ title="Aprobar"><i class="fi fi-br-checkbox"></i></button>
+                                                <button class="action-btn delete" title="Rechazar"><i class="fi fi-br-vote-nay"></i></button>
+                                            }
+                                          
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            }
+                        }
+                        else
+                        {
+                            <tr style="width: 100%;">Este usuario no tiene reservas registradas</tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</Modal>
+
+@code {
+    public List<Users> user { get; set; } = new List<Users>();
+    public List<UsuarioReserva> usuarioReservas = new List<UsuarioReserva>();
+    public List<string> colores { get; set; } = new List<string>() { "EF4444", "F59E0B", "8B5CF6", "10B981", "4361EE" };
+    public Random random = new Random();
+    public bool ModalEliminar { get; set; } = false;
+    public bool MInfo { get; set; } = false;
+
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    public string Id_usuario;
+    public int UsersQ { get; set; } = 0;
+    public int NewUsers { get; set; } = 0;
+    public int ActiveUsers { get; set; } = 0;
+    public Users currentUser { get; set; } = new Users();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var autenticationState = await authenticationStateTask!;
+            Id_usuario = autenticationState.User.Claims.First(e => e.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid").Value;
+
+            FbConnection conn = await connection.GetConnectionAsync();
+            user = (await conn.QueryAsync<Users>("SELECT * FROM USERS")).ToList();
+            UsersQ = await conn.QueryFirstAsync<int>("SELECT COUNT(*) FROM USERS");
+            string fecha = DateTime.Now.Year.ToString() + "-" + DateTime.Now.Month.ToString() +"-1";
+            ActiveUsers = await conn.QueryFirstAsync<int>("SELECT COUNT(*) FROM USERS WHERE ESTADO = TRUE");
+            NewUsers = await conn.QueryFirstAsync<int>("SELECT COUNT(*) FROM USERS WHERE FECHA_REGISTRO >= @Mes", new { Mes = fecha  });
+
+
+
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+
+    }
+
+    public async Task Delete(Users u)
+    {
+        currentUser = u;
+        if(currentUser.Id_user.ToString() == Id_usuario)
+        {
+            await JS.InvokeVoidAsync("alert", "No puedes eliminar tu propio usuario.");
+            return;
+        }
+        else
+        {
+            ModalEliminar = true;
+            StateHasChanged();
+        }
+    }
+
+    public async Task Eliminar()
+    {
+
+        try
+        {
+            FbConnection conn = await connection.GetConnectionAsync();
+            var result = await conn.ExecuteAsync("DELETE FROM USERS WHERE ID_USER=@Id", new { Id = currentUser.Id_user});
+            if(result > 0)
+            {
+                user.Remove(currentUser);
+                currentUser = new();
+                StateHasChanged();
+            }
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task OrderB()
+    {
+        user = user.OrderBy(u => u.Nombre).ToList();
+        StateHasChanged();
+    }
+
+    private async Task CerrarModal()
+    {
+        ModalEliminar = false;
+        currentUser = new Users();
+    }
+
+    private async Task VerInfo(Users u)
+    {
+        FbConnection conn = await connection.GetConnectionAsync();
+        conn.Execute("SELECT * FROM RESERVAS WHERE ID_USER = @Id_user",u);
+
+        usuarioReservas = (await conn.QueryAsync<UsuarioReserva>("SELECT * FROM INFO_RES WHERE ID_USER = @ID", new { ID = u.Id_user })).ToList();
+        currentUser = u;
+        MInfo = true;
+    }
+}

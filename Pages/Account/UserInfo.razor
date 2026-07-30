@@ -1,0 +1,173 @@
+﻿@page "/Profile/UserInfo"
+@using System.Security.Claims
+@layout Dashboard
+
+@inject ICedulaService CedulaService
+@inject IDatabaseConnection databaseConnection
+@inject AuthenticationStateProvider authStateProvider
+<PageTitle>Información</PageTitle>
+@attribute [Authorize]
+
+<div class="user-info-container">
+	<div class="user-info">
+		<div class="table-head">
+			<header><h2>Gestión de información</h2></header>
+			<button class="edit-button">Editar información <i class="fi fi-rr-edit"></i></button>
+
+		</div>
+
+		<div class="table-container" @key="datos">
+			<header class="info-section-header">
+				<i class="fi fi-rr-id-badge"></i>
+				<h4>Datos Personales</h4>
+				
+				
+			</header>
+			<div class="info-table">
+				<div class="nombre-1">
+					<h6 class="info-property">Primer nombre</h6>
+					<h5>@(Response?.Data?.Primer_nombre ?? "-")</h5>
+				</div>
+				<div class="nombre-2">
+					<h6 class="info-property">Segundo nombre</h6>
+					<h5>@(Response?.Data?.Segundo_nombre ?? "-")</h5>
+
+				</div>
+
+				<div class="apellido-1">
+					<h6 class="info-property">Primer Apellido</h6>
+					<h5>@(Response?.Data?.Primer_apellido ?? "-")</h5>
+				</div>
+				<div class="apellido-2">
+					<h6 class="info-property">Segundo Apellido</h6>
+					<h5>@(Response?.Data?.Segundo_apellido ?? "-")</h5>
+				</div>
+				<div class="nacionality">
+					<h6 class="info-property">Nacionalidad</h6>
+					<h5>@(Response?.Data?.Nacionalidad ?? "-")</h5>
+				</div>
+				<div class="identification">
+					<h6 class="info-property">Numero de identificacion</h6>
+					<h5>@(Response?.Data?.Cedula.ToString() ?? "-")</h5>
+				</div>
+				<div class="birthday">
+					<h6 class="info-property">Fecha de nacimiento</h6>
+					<h5>@(Response?.Data?.Fecha_nac ?? "-")</h5>
+				</div>
+				<div class="rif">
+					<h6 class="info-property">RIF</h6>
+					<h5>@(Response?.Data?.Rif ?? "-")</h5>
+				</div>
+			</div>
+		</div>
+
+		<div class="table-container account">
+			<header class="info-section-header">
+				<i class="fi fi-sr-info"></i>
+				<h4>Datos de la cuenta</h4>
+			</header>
+			<div class="info-table">
+				<div class="nombre-1">
+					<h6 class="info-property">Usuario</h6>
+					<h5>@users.Nombre</h5>
+				</div>
+				<div class="apellido-2">
+					<h6 class="info-property">Apellido</h6>
+					<h5>@users.Apellido</h5>
+				</div>
+				<div class="nombre-2">
+					<h6 class="info-property">E-mail</h6>
+					<h5>@users.Email</h5>
+
+				</div>
+
+				
+				<div class="nacionality">
+					<h6 class="info-property">Nacionalidad</h6>
+					<h5>@users.Nacionalidad</h5>
+				</div>
+				<div class="identification">
+					<h6 class="info-property">Numero de identificacion</h6>
+					<h5>@users.Dni</h5>
+				</div>
+				
+				
+			</div>
+		</div>
+		
+
+
+	</div>
+	
+
+
+
+
+
+
+
+</div>
+
+
+@if (isLoading)
+{
+    <p>Cargando datos...</p>
+}
+
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p class="text-danger">@errorMessage</p>
+}
+
+@code {
+	[CascadingParameter]
+	private Task<AuthenticationState>? authenticationStateTask { get; set; } 
+	Cedula? Response { get; set; }
+	private bool isLoading = false;
+	private string? errorMessage;
+	string? NumCed { get; set; }
+	public Users users = new Users();
+	public Guid datos = Guid.NewGuid();
+	TimeSpan edad = new TimeSpan();
+	protected override async Task OnInitializedAsync()
+	{
+		isLoading = true;
+		var authstate = await authenticationStateTask!;
+		string correo = "";
+		foreach(Claim claim in authstate.User.Claims)
+		{
+			if (claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
+			{
+				correo = claim.Value;
+				break;
+			}
+		}
+		var conn = await databaseConnection.GetConnectionAsync();
+		users = await conn.QueryFirstOrDefaultAsync<Users>("SELECT * FROM USERS WHERE EMAIL = @Email", new { Email = correo });
+		BuscarCedula("V",users.Dni.ToString());
+
+	
+		datos = Guid.NewGuid();
+
+		isLoading = false;
+		
+	}
+
+	public async Task BuscarCedula()
+	{
+		isLoading = true;
+		errorMessage = null;
+		Response = await CedulaService.GetCedula(NumCed!, "v");
+		isLoading = false;
+	}
+
+
+	public async Task BuscarCedula( string n, string c)
+	{
+		isLoading = true;
+		errorMessage = null;
+		Response = await CedulaService.GetCedula(c, "v");
+	}
+
+
+}

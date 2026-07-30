@@ -1,0 +1,13 @@
+﻿.avatar-element {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    text-align: left;
+  
+}
+
+.avatar {
+    background-size: cover;
+    aspect-ratio: 1;
+}

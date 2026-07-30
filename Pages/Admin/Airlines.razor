@@ -1,0 +1,504 @@
+﻿@page "/admin/airlines"
+@layout Dashboard
+@attribute [Authorize(Roles = "ADMIN")]
+@inject NavigationManager navigation
+@inject IJSRuntime JS
+@inject IDatabaseConnection DatabaseConnection
+<PageTitle>Aerolíneas</PageTitle>
+<link href="/flag-icons-main/flag-icons.css" rel="stylesheet" />
+<section class="airlines-section">
+	<div class="title-section">
+		<div class="title-text">
+			<h2>Aerolíneas</h2>
+			<p>Administración de aerolineas socias de FlightPal</p>
+		</div>
+		<div class="image-title">
+
+		</div>
+	</div>
+
+	<div class="stats-container">
+		<StatCard Nombre="Total Aerolíneas" Numero="@Stats[0]" Color="#4361EE3F" IconColor="#193A85">
+			<i class="fi fi-sr-user-headset"></i>
+		</StatCard>
+        <StatCard Nombre="Aerolíneas Activas" Numero="@Stats[1]" Color="rgba(56, 176, 0, 0.1)" IconColor="#38b000">
+			<i class="fi fi-br-check-circle"></i>
+		</StatCard> 
+        <StatCard Nombre="Aerolíneas Inactivas" Numero="@Stats[2]" Color="rgba(255, 158, 0, 0.1)" IconColor="#F59E0B">
+			<i class="fi fi-br-broken-chain-link-wrong"></i>
+		</StatCard>
+        <StatCard Nombre="Aerolineas Nacionales" Numero="@Stats[3]" Color="rgba(239,68,68,0.3)" IconColor="">
+			<span class="fa fa-ve"></span>
+		</StatCard>
+        <StatCard Nombre="Aerolineas Internacionales" Numero="@Stats[4]" Color="rgba(67,97,238,0.3)" IconColor="">
+			<span class="fa fa-us"></span>
+		</StatCard>
+	</div>	
+
+	<div class="airlines-bar">
+		<h3>Todas las aerolineas</h3>
+        <select>
+            <option>Todas las aerolineas</option>
+            <option>Nacionales</option>
+            <option>Internacionales</option>
+        </select>
+        <button @onclick="@(()=>MAddAirline=true)" class="btn">Nueva aerolínea</button>
+	</div>
+
+	<article class="airlines-container">
+        @if (Aerolineas.Any())
+        {
+            foreach(var aerolinea in Aerolineas)
+            {
+            <div class="airline-component" style="@(aerolinea.Activo?"":"opacity: .6;")">
+            <header class="airline-header" style="background-image: linear-gradient(to bottom right, @aerolinea.ColorDegradado(), @aerolinea.Color, @aerolinea.ColorDegradadoOscuro())">
+                <div class="airline-info">
+                    <div class="airline-name">
+                        <span id="airlineName">@aerolinea.Nombre_aerolinea</span>
+                    </div>
+                    <div class="airline-country">
+                        <i class="fi fi-br-earth-americas"></i> <p>@Paises.Find(e=>e.Id_Pais == aerolinea.Id_pais).Nombre_Pais</p>
+                     </div>
+                </div>
+                <div class="img-container" style="background-image: url(@aerolinea.GetImageUrl())">
+
+                </div>
+            </header>
+
+            <div class="airline-content">
+                <!-- Detalles de la Aerolínea -->
+                <div class="airline-details">
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fi fi-rr-calendar-lines"></i>
+                            Fecha de Contrato
+                        </div>
+                        <div class="detail-value" id="contractDate">@aerolinea.Fecha_contrato</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fi fi-br-percentage"></i>
+                            Descuento Agencia
+                        </div>
+                        <div class="detail-value" id="agencyDiscount">@aerolinea.Porcentaje</div>
+                    </div>
+                </div>
+
+                <div class="contact-section">
+                    <div class="contact-header">
+                        <i class="fi fi-br-address-book"></i>
+                        Contacto
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fi fi-br-browser"></i>
+                            </div>
+                            <div class="contact-details">
+                                <div class="contact-title">Pagina web</div>
+                                <div class="contact-value" id="contactPerson">
+                                    <a href="@aerolinea.Contacto">@aerolinea.Nombre_aerolinea</a></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="airline-footer">
+                    <div class="airline-actions">
+                        <button class="action-btn secondary" title="Editar" @onclick="@(()=>Editar(aerolinea))">
+                            <i class="fi fi-br-edit"></i>
+                        </button>
+                        <button @onclick="@(()=>VerVuelos(aerolinea))" class="action-btn primary" title="Ver vuelos">
+                            <i class="fi fi-rr-plane"></i>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </div>
+            }
+        }
+      
+        
+    </article>
+    
+</section>
+
+<Modal Displayed="MAddAirline" DisplayedChanged="@(()=>MAddAirline=false)">
+	<div class="airline-modal">
+		<h3>Añadir nueva aerolinea</h3>
+		<div class="input-group">
+            <input @bind="CurrentAerolinea.Nombre_aerolinea" type="text" placeholder="Nombre de la aerolinea" maxlength="30"/>
+            <input @bind="CurrentAerolinea.Abreviatura" type="text" placeholder="Codigo (IATA)" maxlength="2" />
+        </div>
+		<div class="input-group composed">
+			<div class="input-group column">
+				<label for="contrato">Fecha de contrato</label>
+				<input @bind="CurrentAerolinea.Fecha_contrato"  type="date" id="contrato" placeholder="Fecha de contrato" />
+			</div>
+            <input @bind="CurrentAerolinea.Porcentaje" type="number" style="width: 100%;" placeholder="Descuento de aerolinea" max="50" min="5" />
+        </div>
+		
+        <input @bind="CurrentAerolinea.Contacto" type="url" placeholder="Sitio de contacto" />
+        <div class="input-group">
+			<label for="activo">Aerolinea Activa</label>
+            <input @bind="CurrentAerolinea.Activo"  type="checkbox" value="true" id="activo" />
+        </div>
+		<div class="input-group">
+			<label for="inter">Aerolinea internacional</label>
+			<input @bind="CurrentAerolinea.Internacional" type="checkbox" value="true" id="inter" />
+        </div>
+		
+       
+        <select @bind="CurrentAerolinea.Id_pais">
+           @foreach(var pais in Paises)
+           {
+            <option value="@pais.Id_Pais">@pais.Nombre_Pais</option>
+		    }
+        </select>
+		<div class="input-group">
+			<label>Selecciona un color para la aerolinea</label>
+            <input @bind="CurrentAerolinea.Color" id="icolor" style="padding: .2rem;" type="color" name="name" />
+         </div>
+        <InputFile id="inputFile" OnChange="HandleUpload" placeholder="Logo de aerolinea" accept="image/png, image/jpeg"></InputFile>
+		<div class="preview">
+            <div class="img-upload-container">
+                <img src="@urlImagen" alt="" />
+            </div>
+        </div>
+       
+
+		<div class="buttons">
+			<button class="btn cancel expand">Cancelar</button>
+            <button @onclick="GuardarAerolinea" class="btn expand">Guardar</button>
+        </div>
+     </div>
+</Modal>
+
+<Modal Displayed="MEditAirline" DisplayedChanged="@(()=>{MEditAirline=false; CurrentAerolinea = new Aerolinea(); urlImagen ="";})">
+    <div class="airline-modal">
+		<h3>Editar aerolinea</h3>
+		<div class="input-group">
+            <input @bind="CurrentAerolinea.Nombre_aerolinea" type="text" placeholder="Nombre de la aerolinea" maxlength="30"/>
+            <input @bind="CurrentAerolinea.Abreviatura" type="text" placeholder="Codigo (IATA)" maxlength="2" />
+        </div>
+		<div class="input-group composed">
+			<div class="input-group column">
+				<label for="contrato">Fecha de contrato</label>
+				<input @bind="CurrentAerolinea.Fecha_contrato"   type="date" id="contrato" placeholder="Fecha de contrato" />
+			</div>
+			<input @bind="CurrentAerolinea.Porcentaje" @onfocusout="HandlePercentage" type="number" style="width: 100%;" placeholder="Descuento de aerolinea" max="50" min="5" />
+        </div>
+		
+        <input @bind="CurrentAerolinea.Contacto" type="url" placeholder="Sitio de contacto" />
+        <div class="input-group">
+			<label for="activo">Aerolinea Activa</label>
+            <input @bind="CurrentAerolinea.Activo"  type="checkbox" value="true" id="activo" />
+        </div>
+		<div class="input-group">
+			<label for="inter">Aerolinea internacional</label>
+			<input @bind="CurrentAerolinea.Internacional" type="checkbox" value="true" id="inter" />
+        </div>
+		
+       
+        <select @bind="CurrentAerolinea.Id_pais">
+           @foreach(var pais in Paises)
+           {
+            <option value="@pais.Id_Pais">@pais.Nombre_Pais</option>
+		    }
+        </select>
+		<div class="input-group">
+			<label>Selecciona un color para la aerolinea</label>
+            <input @bind="CurrentAerolinea.Color" id="icolor" style="padding: .2rem;" type="color" name="name" />
+         </div>
+        <InputFile id="inputFile" OnChange="HandleUpload" placeholder="Logo de aerolinea" accept="image/png, image/jpeg"></InputFile>
+		<div class="preview">
+            <div class="img-upload-container">
+                <img src="@urlImagen" alt="" />
+            </div>
+        </div>
+       
+
+		<div class="buttons">
+			<button class="btn cancel expand">Cancelar</button>
+            <button @onclick="EditAerolinea" class="btn expand">Guardar</button>
+        </div>
+    </div>
+</Modal>
+
+<Modal Displayed="MVuelos" DisplayedChanged="@(()=>{MVuelos=false; vuelos = new List<Vuelo>();})">
+	@if (vuelos.Any())
+	{
+
+		<div class="flight-table-container">
+			<div class="table-inner">
+				<table class="flight-table">
+					<thead>
+						<tr>
+							<th>Vuelo</th>
+							<th>Aerolinea</th>
+							<th>Origen</th>
+							<th>Destino</th>
+							<th>Fecha</th>
+							<th>Hora de salida</th>
+							<th>Hora de llegada estimada</th>
+							<th>Estado</th>
+							
+						</tr>
+					</thead>
+					<tbody>
+						@if (vuelos.Any())
+						{
+							foreach (var vuelo in vuelos)
+							{
+								<tr>
+									<td>@(Aerolineas.Find(e => e.Id_aerolinea == vuelo.Id_aerolinea).Abreviatura + vuelo.Id_vuelo.ToString().PadLeft(5, '0'))</td>
+									<td>@(Aerolineas.Find(e => e.Id_aerolinea == vuelo.Id_aerolinea).Nombre_aerolinea)</td>
+									<td>
+										@(Destinos.Find(e => e.Id_destino == vuelo.Origen).Nombre_destino),
+										@(Paises.Find(e => e.Id_Pais == Destinos.Find(e => e.Id_destino == vuelo.Origen).Id_pais).Abreviatura)
+									</td>
+									<td>
+										@(Destinos.Find(e => e.Id_destino == vuelo.Destino).Nombre_destino),
+										@(Paises.Find(e => e.Id_Pais == Destinos.Find(e => e.Id_destino == vuelo.Destino).Id_pais).Abreviatura)
+									</td>
+									<td>@vuelo.Fecha_salida.ToShortDateString()</td>
+									<td>@vuelo.Fecha_salida.ToShortTimeString()</td>
+									<td>@vuelo.Fecha_llegada.ToShortTimeString()</td>
+									@if (vuelo.Estado == "PROGRAMADO")
+									{
+										<td><span class="status-badge status-active">Programado</span></td>
+									}
+									else
+									{
+										<td><span class="status-badge status-active">Activo</span></td>
+									}
+								</tr>
+
+							}
+						}
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+	}
+	else
+	{
+		<div class="img-adv">
+			<img src="imgs/advertencia.gif" alt="" />
+			<h3>Esta aerolinea no tiene vuelos registrados</h3>
+		</div>
+	}
+
+</Modal>
+@code {
+	IJSObjectReference jsModule;
+	public bool MAddAirline { get; set; } = false;
+	public bool MEditAirline { get; set; } = false;
+	public bool MVuelos { get; set; } = false;
+	public string urlImagen { get; set; } = "";
+
+
+	public Aerolinea CurrentAerolinea = new Aerolinea();
+
+
+
+	List<Pais> Paises = new List<Pais>();
+	List<Aerolinea> Aerolineas = new List<Aerolinea>();
+	List<string> Stats = new List<string>() { "","","","",""};
+	List<Vuelo> vuelos = new List<Vuelo>();
+	List<Destino> Destinos { get; set; } = new List<Destino>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "/app.js");
+			FbConnection conn = await DatabaseConnection.GetConnectionAsync();
+			Paises = (await conn.QueryAsync<Pais>("SELECT * FROM PAIS")).ToList();
+			Aerolineas = (await conn.QueryAsync<Aerolinea>("SELECT * FROM AEROLINEAS")).ToList(); 
+			Destinos = (await conn.QueryAsync<Destino>("SELECT * FROM Destinos")).ToList();
+			Stats = new List<string>
+            {
+                Aerolineas.Count.ToString(),
+                Aerolineas.Count(a => a.Activo).ToString(),
+                Aerolineas.Count(a => !a.Activo).ToString(),
+                Aerolineas.Count(a => !a.Internacional).ToString(), // nacionales
+                Aerolineas.Count(a => a.Internacional).ToString()     // internacionales
+            };
+
+
+		}
+		catch(Exception ex)
+		{
+			Console.WriteLine(ex.Message);
+		}
+
+	}
+
+	private async Task HandleUpload(InputFileChangeEventArgs e)
+	{
+		if (e.File.Size > 1024 * 1024)
+		{
+			await ClearInputFile();
+			await JS.InvokeVoidAsync("alert", "El tamaño de la imagen no puede ser superior a 1MB");
+			urlImagen = "";
+			return;
+
+		}
+
+
+		var archivo = e.File;
+		archivo = await archivo.RequestImageFileAsync(archivo.ContentType, 256, 256);
+		var buffer = new byte[archivo.Size];
+		await archivo.OpenReadStream().ReadAsync(buffer);
+		urlImagen = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(buffer)}";
+		CurrentAerolinea.Imagen = buffer;
+		CurrentAerolinea.Tipo_imagen = archivo.ContentType;
+
+	}
+
+	private async Task ClearInputFile()
+	{
+		await jsModule.InvokeVoidAsync("clearFileInput");
+	}
+
+	private async Task GuardarAerolinea(MouseEventArgs args)
+	{
+		if( Aerolineas.Exists(e=>e.Abreviatura == CurrentAerolinea.Abreviatura))
+		{
+			await JS.InvokeVoidAsync("alert", "Este código ya está registrado para otra aerolinea");
+			return;
+		}
+		if (string.IsNullOrWhiteSpace(CurrentAerolinea.Nombre_aerolinea) || string.IsNullOrWhiteSpace(CurrentAerolinea.Abreviatura) || string.IsNullOrWhiteSpace(CurrentAerolinea.Contacto))
+		{
+			await JS.InvokeVoidAsync("alert", "Los campos no pueden estar vacíos");
+			return;
+		}
+		if (urlImagen == "")
+		{
+			await JS.InvokeVoidAsync("alert", "Asegurese de ingresar el logo de la aerolinea");
+			return;
+		}
+		try
+		{
+			FbConnection connection = await DatabaseConnection.GetConnectionAsync();
+			await connection.ExecuteAsync(@"INSERT INTO AEROLINEAS (NOMBRE_AEROLINEA,ABREVIATURA, FECHA_CONTRATO, PORCENTAJE, ACTIVO, INTERNACIONAL, 
+                                                                    ID_PAIS, COLOR, IMAGEN, TIPO_IMAGEN, CONTACTO) VALUES (@Nombre_aerolinea, @Abreviatura, 
+                                                                    @Fecha_contrato, @Porcentaje, @Activo, @Internacional, @Id_pais, @Color, @Imagen, 
+                                                                    @Tipo_imagen, @Contacto)",
+																	new
+																	{
+																		Nombre_aerolinea = CurrentAerolinea.Nombre_aerolinea,
+																		Abreviatura = CurrentAerolinea.Abreviatura.ToUpper(),
+																		Fecha_contrato = CurrentAerolinea.Fecha_contrato.ToString("yyyy-MM-dd"),
+																		Porcentaje = CurrentAerolinea.Porcentaje,
+																		Activo = CurrentAerolinea.Activo,
+																		Internacional = CurrentAerolinea.Internacional,
+																		Id_pais = CurrentAerolinea.Id_pais,
+																		Color = CurrentAerolinea.Color,
+																		Imagen = CurrentAerolinea.Imagen,
+																		Tipo_imagen = CurrentAerolinea.Tipo_imagen,
+																		Contacto = CurrentAerolinea.Contacto
+
+																	});
+
+			CurrentAerolinea = new Aerolinea();
+			urlImagen = "";
+			MAddAirline = false;
+			await JS.InvokeVoidAsync("alert", "Aerolinea guardada exitosamente.");
+			Aerolineas = (await connection.QueryAsync<Aerolinea>("SELECT * FROM AEROLINEAS")).ToList();
+			await UpdateStats();
+			StateHasChanged();
+
+		}
+		catch (Exception ex)
+		{
+
+			await JS.InvokeVoidAsync("alert", "Error al guardar la aerolinea: " + ex.Message);
+		}
+
+	}
+	public async Task Editar(Aerolinea a)
+	{
+		CurrentAerolinea = a;
+		urlImagen = CurrentAerolinea.GetImageUrl();
+		MEditAirline = true;
+		StateHasChanged();
+	}
+	private async Task EditAerolinea(MouseEventArgs args)
+	{
+		try
+		{
+			FbConnection connection = await DatabaseConnection.GetConnectionAsync();
+			await connection.ExecuteAsync(@"UPDATE AEROLINEAS SET NOMBRE_AEROLINEA =  @Nombre_aerolinea, ABREVIATURA = @Abreviatura, FECHA_CONTRATO =  @Fecha_contrato,
+																	PORCENTAJE = @Porcentaje, ACTIVO = @Activo, INTERNACIONAL= @Internacional, ID_PAIS = @Id_pais,
+                                                                   COLOR = @Color, IMAGEN = @Imagen, TIPO_IMAGEN = @Tipo_imagen, CONTACTO = @Contacto  WHERE ID_AEROLINEA = @Id_aerolinea",
+																	new
+																	{
+																		Nombre_aerolinea = CurrentAerolinea.Nombre_aerolinea,
+																		Abreviatura = CurrentAerolinea.Abreviatura.ToUpper(),
+																		Fecha_contrato = CurrentAerolinea.Fecha_contrato.ToString("yyyy-MM-dd"),
+																		Porcentaje = CurrentAerolinea.Porcentaje,
+																		Activo = CurrentAerolinea.Activo,
+																		Internacional = CurrentAerolinea.Internacional,
+																		Id_pais = CurrentAerolinea.Id_pais,
+																		Color = CurrentAerolinea.Color,
+																		Imagen = CurrentAerolinea.Imagen,
+																		Tipo_imagen = CurrentAerolinea.Tipo_imagen,
+																		Contacto = CurrentAerolinea.Contacto,
+																		Id_aerolinea = CurrentAerolinea.Id_aerolinea
+
+																	});
+
+			CurrentAerolinea = new Aerolinea();
+			urlImagen = "";
+			MEditAirline = false;
+			await JS.InvokeVoidAsync("alert", "Aerolinea guardada exitosamente.");
+			Aerolineas = (await connection.QueryAsync<Aerolinea>("SELECT * FROM AEROLINEAS")).ToList();
+			await UpdateStats();
+			StateHasChanged();
+
+
+		}catch(Exception ex)
+		{
+			await JS.InvokeVoidAsync("alert", ex.Message);
+		}
+
+	}
+	private async Task HandlePercentage()
+	{
+		Console.WriteLine("Handling");
+		if (CurrentAerolinea.Porcentaje > 50)
+		{
+			CurrentAerolinea.Porcentaje = 50;
+		}
+
+		if (CurrentAerolinea.Porcentaje < 0)
+		{
+			CurrentAerolinea.Porcentaje = 0;
+		}
+	}
+
+
+	private async Task UpdateStats()
+	{
+		Stats = new List<string>
+			{
+				Aerolineas.Count.ToString(),
+				Aerolineas.Count(a => a.Activo).ToString(),
+				Aerolineas.Count(a => !a.Activo).ToString(),
+				Aerolineas.Count(a => !a.Internacional).ToString(), 
+                Aerolineas.Count(a => a.Internacional).ToString()     
+            };
+	}
+
+	private async Task VerVuelos(Aerolinea a)
+	{
+		FbConnection conn = await DatabaseConnection.GetConnectionAsync();
+		vuelos = (await conn.QueryAsync<Vuelo>("SELECT * FROM VUELOS WHERE ID_AEROLINEA = @Id_aerolinea", new { Id_aerolinea = a.Id_aerolinea })).ToList();
+		MVuelos = true;
+		StateHasChanged();
+	}
+}

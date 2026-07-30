@@ -1,0 +1,35 @@
+﻿<div style="position: relative; @Style" @onclick="ManageOnclick" class="stat-card">
+            <div class="stat-icon" style="background-color: @Color; color: @IconColor;">
+                @ChildContent
+            </div>
+            <div class="stat-info">
+                <h3 style="font-size: @(FontMin?"1rem":"");">@Numero</h3>
+                <p>@Nombre</p>
+            </div>
+ </div>
+     
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+    [Parameter]
+    public string? Nombre {get; set;}
+    [Parameter]
+    public string? Style { get; set; }
+    [Parameter]
+    public string? Numero { get; set; }
+    [Parameter]
+    public string? Color{ get; set; }
+    [Parameter]
+    public string? IconColor { get; set; }
+    [Parameter]
+    public bool FontMin { get; set; }
+
+    [Parameter]
+    public EventCallback<Task> Onclick { get; set; }
+
+    public async Task ManageOnclick()
+    {
+        await Onclick.InvokeAsync();
+    }
+
+}

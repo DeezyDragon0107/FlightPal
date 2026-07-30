@@ -1,0 +1,213 @@
+﻿@using System.Globalization
+@inherits LayoutComponentBase
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+<AuthorizeView Roles="USER">
+	<Authorized>
+		<nav class="dashboard-nav">
+			<i @onclick="@(() => navigation.NavigateTo("/"))" class="fi fi-rr-arrow-small-left"></i>
+			<i @onclick="@(() => Menu = !Menu)" class="fi fi-br-menu-dots-vertical"></i>
+		</nav>
+		<div class="menu @(Menu ? "visible" : "")">
+			<ul>
+				<li @onclick="@(() => navigation.NavigateTo("/logout"))" class="menu-item"><i class="fi fi-br-exit"></i>Cerrar sesión</li>
+			</ul>
+		</div>
+		<main>
+			<section>
+				<article class="user-cover-image" style="background-color: blanchedalmond;">
+					<img class="cover-image" src="imgs/DashboardDefaultBanner.jpg" alt="Alternate Text" />
+				</article>
+				<img src="/imgs/avatar.png" class="avatar-img" />
+				<article class="user">
+					<h2>@Nombre</h2>
+					<p><i>@Nacionalidad</i></p>
+
+
+
+
+				</article>
+
+			</section>
+			<ul>
+				<li class="dashboard-li"><NavLink class="dashboard-nav-link" href="/Profile" Match="NavLinkMatch.All" ActiveClass="dashboard-active">Inicio</NavLink></li>
+				<li class="dashboard-li"><NavLink class="dashboard-nav-link" href="/Profile/UserInfo" Match="NavLinkMatch.All" ActiveClass="dashboard-active">Información</NavLink></li>
+				<li class="dashboard-li"><NavLink class="dashboard-nav-link" href="/Profile/Tickets" Match="NavLinkMatch.All" ActiveClass="dashboard-active" >Boletos</NavLink></li>
+				<li class="dashboard-li"><NavLink class="dashboard-nav-link" href="/Profile/reservations" Match="NavLinkMatch.All" ActiveClass="dashboard-active">Reservaciones</NavLink></li>
+				<li class="dashboard-li"><NavLink class="dashboard-nav-link" href="/Profile/pagos" Match="NavLinkMatch.All" ActiveClass="dashboard-active">Pagos</NavLink></li>
+				
+
+				<li class="dashboard-ico">
+					<NavLink href="/Profile" class="dashboard-nav-link" Match="NavLinkMatch.All" ActiveClass="dashboard-active">
+						<i class="fi fi-rr-home"></i>
+					</NavLink>
+				</li>
+
+				<li class="dashboard-ico">
+					<NavLink href="/Profile/UserInfo" class="dashboard-nav-link" Match="NavLinkMatch.All" ActiveClass="dashboard-active">
+						<i class="fi fi-rr-info"></i>
+					</NavLink>
+				</li>
+
+				<li class="dashboard-ico">
+					<NavLink class="dashboard-nav-link" Match="NavLinkMatch.All" ActiveClass="dashboard-active">
+						<i class="fi fi-rr-ticket-airline"></i>
+					</NavLink>
+				</li>
+
+				<li class="dashboard-ico">
+					<NavLink class="dashboard-nav-link" Match="NavLinkMatch.All" ActiveClass="dashboard-active">
+						<i class="fi fi-rr-hotel"></i>
+					</NavLink>
+				</li>
+
+				<li class="dashboard-ico">
+					<NavLink class="dashboard-nav-link" Match="NavLinkMatch.All" ActiveClass="dashboard-active">
+						<i class="fi fi-rr-money-bill-wave"></i>
+					</NavLink>
+				</li>
+
+				<li class="dashboard-ico">
+					<NavLink class="dashboard-nav-link" Match="NavLinkMatch.All" ActiveClass="dashboard-active">
+						<i class="fi fi-bs-menu-dots"></i>
+					</NavLink>
+				</li>
+			</ul>
+		</main>
+		@Body
+	</Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="ADMIN">
+	<Authorized>
+		<nav class="dashboard-nav">
+			<i @onclick="@(() => navigation.NavigateTo("/"))" class="fi fi-rr-arrow-small-left"></i>
+			<i @onclick="@(()=>Menu=!Menu)" class="fi fi-br-menu-dots-vertical"></i>
+		</nav>
+		<div class="menu @(Menu?"visible":"")">
+			<ul>
+				<li @onclick="@(()=>navigation.NavigateTo("/logout"))" class="menu-item"><i class="fi fi-br-exit"></i>Cerrar sesión</li>
+			</ul>
+		</div>
+		<div class="admin-container">
+			<aside class="sidebar @(Expanded?"expanded":"")">
+				<header>
+					<div class="sidebar-element" @onclick="ToggleExpand">
+						<button ><i class="fi fi-br-menu-burger"></i></button>
+						<p>Menú</p>
+					</div>
+					
+					
+				</header>
+				<div class="buttons">
+					<div class="sidebar-element @(navigation.ToBaseRelativePath(navigation.Uri)=="Profile"?"active":"")" @onclick="@(()=>navigation.NavigateTo("/Profile"))" >
+						<i class="fi fi-sr-home"></i>
+						<NavLink ActiveClass="admin-link-active" class="admin-link" href="/Profile" >Inicio</NavLink>
+					</div>
+					<div class="sidebar-element @(navigation.ToBaseRelativePath(navigation.Uri) == "admin/users" ? "active" : "")" @onclick="@(() => navigation.NavigateTo("/admin/users"))">
+						<i class="fi fi-sr-users-alt"></i>
+						<NavLink ActiveClass="admin-link-active" class="admin-link" href="/admin/users">Usuarios</NavLink>
+				
+					</div>
+					
+					<div class="sidebar-element @(navigation.ToBaseRelativePath(navigation.Uri) == "admin/packages" ? "active" : "")" @onclick="@(()=>navigation.NavigateTo("/admin/packages"))">
+						<i class="fi fi-rr-box-open"></i>
+						<NavLink ActiveClass="admin-link-active" class="admin-link" href="/admin/packages">Paquetes</NavLink>
+					</div>
+					<div class="sidebar-element @(navigation.ToBaseRelativePath(navigation.Uri) == "admin/destinies" ? "active": "")" @onclick="@(()=>navigation.NavigateTo("/admin/destinies"))"  >
+						<i class="fi fi-br-map-location-track"></i>
+						<NavLink ActiveClass="admin-link-active" class="admin-link" href="/admin/destinies">Destinos</NavLink>
+					</div>
+					<div title="Vuelos" class="sidebar-element @(navigation.ToBaseRelativePath(navigation.Uri) == "admin/flights" ? "active" : "")" @onclick="@(() => navigation.NavigateTo("/admin/flights"))">
+						<i class="fi fi-br-airplane-journey"></i>
+						<NavLink ActiveClass="admin-link-active" class="admin-link" href="/admin/flights">Vuelos</NavLink>
+					</div>
+					<div class="sidebar-element  @(navigation.ToBaseRelativePath(navigation.Uri) == "admin/airlines" ? "active" : "")" @onclick="@(() => navigation.NavigateTo("/admin/airlines"))">
+
+						<i class="fi fi-sr-seat-airline"></i>
+						<NavLink ActiveClass="admin-link-active" class="admin-link" href="/admin/airlines">Aerolíneas</NavLink>
+					</div>
+					<div class="sidebar-element @(navigation.ToBaseRelativePath(navigation.Uri) == "admin/notices" ? "active" : "")" @onclick="@(() => navigation.NavigateTo("/admin/notices"))">
+						<i class="fi fi-sr-newspaper"></i>
+						<NavLink href="admin/notices" class="admin-link" ActiveClass="admin-link-active">Noticias</NavLink>
+					</div>
+				
+
+				
+				
+
+				
+				</div>
+				<footer>
+					<div class="sidebar-element">
+						<Avatar Rounded Size="2" Data="imgs/avatar.png"></Avatar>
+						<p>@(new CultureInfo("Es-es",false).TextInfo.ToTitleCase(context.User.Identity.Name.ToLower()))</p>
+						
+					</div>
+					
+
+				</footer>
+			</aside>
+			@Body
+		</div>
+		
+	</Authorized>
+</AuthorizeView>
+
+
+
+
+
+@code {
+	[CascadingParameter]
+	private Task<AuthenticationState>? authenticationStateTask { get; set; }
+	public string? Nacionalidad { get; set; } = "Venezolano";
+	public string? Nombre { get; set; } = "Usuario1";
+
+	public bool IsActive()
+	{
+		var currentUrl = navigation.ToBaseRelativePath(navigation.Uri);
+		NavLinkMatch match = NavLinkMatch.All;
+		return true;
+
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		base.OnInitialized();
+		try
+		{
+			var autenticationState = await authenticationStateTask!;
+			Nombre = autenticationState.User.Identity?.Name;
+			Nombre = new CultureInfo("Es-es", false).TextInfo.ToTitleCase(Nombre?.ToLower());
+		}
+		catch(Exception ex)
+		{
+			Console.WriteLine(ex.Message);
+		}
+
+
+
+	}
+	public async Task ShowMessage()
+	{
+
+		await JS.InvokeVoidAsync("alert", Nombre);
+
+	}
+}
+
+@*Admin*@
+@code{
+	public bool Expanded { get; set; } = false;
+	public bool Menu { get; set; } = false;
+	public async Task ToggleExpand()
+	{
+		Expanded = !Expanded;
+		
+		
+	}
+
+}

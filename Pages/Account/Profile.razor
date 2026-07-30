@@ -1,0 +1,481 @@
+﻿@rendermode InteractiveServer
+@page "/Profile"
+@inject IDatabaseConnection DatabaseConnection
+@using ApexCharts
+@using System.Timers
+@using System.Globalization
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Inicio</PageTitle>
+@attribute [Authorize]
+@layout Dashboard
+
+<AuthorizeView Roles="ADMIN">
+	<Authorized>
+		
+			<article class="principal-section">
+				
+			<section class="title-section">
+				<div class="title-text">
+					<h2>
+						Bienvenido @(new CultureInfo("Es-es", false).TextInfo.ToTitleCase(context.User.Identity.Name.ToLower()))
+					</h2>
+					<p>Gestiona los usuarios y destinos desde el panel de administración</p>
+				</div>
+				<div class="image-title">
+				</div>
+
+			</section>
+
+
+
+				<div class="cards">
+				<StatCard Onclick="@(()=>navigationManager.NavigateTo("/admin/reports"))" Numero="Reportes" Nombre="Reportes" Style="cursor: pointer;" Color="rgba(16,185,129,.4)" IconColor="#095D4A"><i class="fi fi-sr-file-chart-line"></i></StatCard>
+				<StatCard Nombre="Usuarios activos" Numero="@ActiveUsers.ToString()" Color="Aliceblue" IconColor="Blue">
+					<i class="fi fi-br-users-alt"></i>
+				</StatCard>
+				<StatCard Nombre="Ingresos Totales" Numero="@(total.ToString() + "Bs")" Color="rgba(56, 176, 0, 0.1)" IconColor="#38b000">
+					<i class="fi fi-br-dollar"></i>
+				</StatCard>
+				<StatCard Nombre="Todas las reservas" IconColor="#8338ec" Color="rgba(131, 56, 236, 0.1)" onclick="@(() => { MReservas = true; })" Numero="@((usuarioReservas.Count + usuarioPaquetes.Count).ToString())"><i class="fi fi-sr-reservation-table"></i></StatCard>
+				</div>
+			<div class="charts">
+
+				<div class="chart-container">
+					<ApexChart @key="chartKey1" Options="chartOptions" TItem="ReservasMes" Title="Reservas por mes">
+						<ApexPointSeries TItem="ReservasMes"
+										 Items="reservasMes"
+										 SeriesType="@SeriesType.Area"
+										 Name="Gross Value"
+										 XValue="@(e =>  NombreMes(e.Mes))"
+										 YValue="@(e => e.Total)" />
+					</ApexChart>
+				</div>
+				<div class="chart-container">
+					<ApexChart  @key="chartKey2" TItem="MostVisited" Title="Destinos visitados">
+						<ApexPointSeries TItem="MostVisited"
+										 Items="mosts"
+										 SeriesType="@SeriesType.Donut"
+										 Name="Gross Value"
+										 XValue="@(e => e.Destino)"
+										 YValue="@(e => e.Visitas)" />
+					</ApexChart>
+				</div>
+
+			
+			</div>
+				<Modal Displayed="MReservas" DisplayedChanged="@(()=>MReservas=false)">
+
+
+					
+				<div class="tabs">
+
+					<input type="radio" name="clase" checked="checked" id="Economica" value="1" />
+					<label for="Economica">Reservas de vuelo</label>
+					<div class="contenido">
+
+							<div class="flight-table-container modal">
+							<div class="table-inner">
+								<table class="flight-table">
+									<thead>
+										<tr>
+											<th>Nombre</th>
+											<th>Apellido</th>
+											<th>DNI</th>
+											<th>Fecha de reserva</th>
+											<th>Estado</th>
+											<th>Metodo de Pago</th>
+											<th>Numero Comprobante</th>
+											<th>Total</th>
+											<th>Acciones</th>
+										</tr>
+									</thead>
+									<tbody>
+										@if (usuarioReservas.Any())
+										{
+											foreach (var ur in usuarioReservas)
+											{
+												<tr>
+													<td>@ur.Nombre</td>
+													<td>@ur.Apellido</td>
+													<td>
+														@ur.Dni
+													</td>
+													<td>
+														@ur.Fecha_reserva
+													</td>
+
+													<td><span class="status-badge @(ur.Estado == "PENDIENTE" ? "status-pending" : "") 
+																		@(ur.Estado == "APROBADO" ? "status-active" : "")
+																				@(ur.Estado == "RECHAZADO" ? "status-inactive" : "")">@ur.Estado</span>
+													</td>
+
+													<td>@ur.Metodo_pago</td>
+													<td>@ur.Num_comprobante</td>
+													<td>@ur.Monto_total Bs.</td>
+
+													<td>
+														<div class="table-actions">
+		@* 
+															<button class="action-btn approve" @onclick="@(() => UpdateReservas(ur, "APROBADO"))" title="Aprobar"><i class="fi fi-br-checkbox"></i></button>
+															<button @onclick="@(() => VerComprobante(ur))" class="action-btn" title="Ver comprobante"><i class="fi fi-sr-credit-card-eye"></i></button>
+															<button class="action-btn delete" @onclick="@(() => UpdateReservas(ur, "RECHAZADO"))" title="Rechazar"><i class="fi fi-br-vote-nay"></i></button> *@
+														</div>
+													</td>
+												</tr>
+
+											}
+										}
+									</tbody>
+								</table>
+							</div>
+
+						</div>
+					</div>
+
+					<input type="radio" name="clase" id="paquetes" value="2" />
+					<label for="paquetes">Reservas de paquetes</label>
+					<div class="contenido">
+						<div class="flight-table-container modal">
+							<div class="table-inner">
+								<table class="flight-table">
+									<thead>
+										<tr>
+											<th>Cliente</th>
+											<th>DNI</th>
+											<th>Paquete</th>
+											<th>Fecha de reserva</th>
+											<th>Estado</th>
+											<th>Metodo de Pago</th>
+											<th>Numero Comprobante</th>
+											<th>Total</th>
+											<th>Acciones</th>
+										</tr>
+									</thead>
+									<tbody>
+										@if (usuarioPaquetes.Any())
+										{
+											foreach (var ur in usuarioPaquetes)
+											{
+												<tr>
+													<td>@ur.Nombre @ur.Apellido</td>
+													<td>
+														@ur.Dni
+													</td>
+													<td>@(paquetes.Find(e => e.Id_Paquete == ur.Id_paquete).Nombre_paquete)</td>
+													<td>
+														@ur.Fecha
+													</td>
+													<td>
+													<span class="status-badge @(ur.Estado == "PENDIENTE" ? "status-pending" : "")
+																				@(ur.Estado == "APROBADO" ? "status-active" : "")
+																						@(ur.Estado == "RECHAZADO" ? "status-inactive" : "")">@ur.Estado</span>
+													</td>
+
+													<td>@ur.Metodo_pago</td>
+													<td>@ur.Numero_comprobante</td>
+													<td>@ur.Monto_total Bs.</td>
+
+													<td>
+														<div class="table-actions">
+															@if(ur.Estado == "PENDIENTE")
+															{
+																<button class="action-btn approve" @onclick="@(() => UpdateReservas(ur, "APROBADO"))" title="Aprobar"><i class="fi fi-br-checkbox"></i></button>
+																<button @onclick="@(() => VerComprobante(ur))" class="action-btn" title="Ver comprobante"><i class="fi fi-sr-credit-card-eye"></i></button>
+																<button class="action-btn delete" @onclick="@(() => UpdateReservas(ur, "RECHAZADO"))" title="Rechazar"><i class="fi fi-br-vote-nay"></i></button>
+															}
+
+														</div>
+													</td>
+												</tr>
+
+											}
+										}
+									</tbody>
+								</table>
+							</div>
+
+						</div>
+					</div>
+				</div>
+				</Modal>
+			</article>
+	</Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="USER">
+	<Authorized>
+		<section class="profile-principal">
+			<article class="principal-section">
+				<div class="banner">
+					<h5>¿Aún no decides a donde viajar?</h5>
+					<h3>Echa un vistazo a nuestra lista de destinos</h3>
+				</div>
+				<div class="widgets">
+					<div class="widget-card">
+						<span><i class="fi fi-br-bell"></i></span>
+						<div class="widget-info">
+							<h5>@Stats[0]</h5>
+							<h4>Reservaciones activas</h4>
+						</div>
+					</div>
+					<div class="widget-card">
+						<span><i class="fi fi-sr-plane-alt"></i></span>
+						<div class="widget-info">
+							<h5>0</h5>
+							<h4>Vuelos recientes</h4>
+						</div>
+					</div>
+					<div class="widget-card">
+						<span><i class="fi fi-br-usd-circle"></i></span>
+						<div class="widget-info">
+							<h5>@Stats[2]</h5>
+							<h4>Pagos realizados</h4>
+						</div>
+						
+					</div>
+				</div>
+				<div class="posts-container">
+					@if (posts.Any())
+					{
+						foreach(var p in posts)
+						{
+							<PostPreview Publi="p" MaxW="100%"></PostPreview>
+						}
+					}
+
+				</div>
+
+			</article>
+			<sidebar class="sidebar">
+				
+
+				<div class="destacados">
+					<h4>Destacados</h4>
+					<div class="carrusel">
+						<div class="img-container" style="transform: translateX(@($"-{contador*100}%"))">
+							<img src="imgs/ccs.jpg" alt="Alternate Text" />
+							<img src="imgs/barquisimeto.jpg" alt="" />
+							<img src="imgs/ccs.jpg" alt="Alternate Text" />
+							<img src="imgs/barquisimeto.jpg" alt="" />
+							<img src="imgs/ccs.jpg" alt="Alternate Text" />
+							<img src="imgs/barquisimeto.jpg" alt="" />
+							<img src="imgs/mgta.webp" alt="Alternate Text" />
+						</div>
+					</div>
+				</div>
+			</sidebar>
+
+		</section>
+	</Authorized>
+</AuthorizeView>
+
+@code {
+	public ApexChartOptions<ReservasMes> chartOptions { get; set; } = new ApexChartOptions<ReservasMes>
+	{
+		Theme = new Theme { Palette = PaletteType.Palette10 },
+		Chart = new Chart
+		{
+			Toolbar = new Toolbar
+			{
+				Show = false
+			}
+		}
+	};
+	[CascadingParameter]
+	public Task<AuthenticationState> authenticationState { get; set; }
+
+	public Timer? timer;
+	public int contador { get; set; } = 0;
+	public int ActiveUsers { get; set; } = 0;
+	public bool MReservas { get; set; } = false;
+	public bool MComprobante { get; set; } = false;
+
+	public string urlImagen { get; set; } = "";
+
+	List<MostVisited> mosts = new List<MostVisited>();
+	List<ReservasMes> reservasMes = new List<ReservasMes>();
+	public List<Paquete> paquetes = new List<Paquete>();
+
+	List<UsuarioReserva> usuarioReservas = new List<UsuarioReserva>();
+	List<UsuarioPaquete> usuarioPaquetes = new List<UsuarioPaquete>();
+	List<Publicacion> posts = new List<Publicacion>();
+	public List<string> Stats = new List<string>() { "", "", "" };
+
+	private Guid chartKey1 = Guid.NewGuid();
+	private Guid chartKey2 = Guid.NewGuid();
+	public decimal total { get; set; } = 0;
+	public int Id_user { get; set; }
+	public string Role { get; set; }
+
+
+
+	protected override async Task OnInitializedAsync()
+	{
+
+		FbConnection conn = await DatabaseConnection.GetConnectionAsync();
+		ActiveUsers = await conn.QueryFirstAsync<int>("SELECT COUNT(*) FROM USERS WHERE ESTADO = TRUE");
+		List<Ventas> ventas = (await conn.QueryAsync<Ventas>("SELECT A.NOMBRE_AEROLINEA, A.PORCENTAJE,SUM(R.MONTO_TOTAL) AS TOTAL FROM RESERVAS AS R INNER JOIN VUELOS AS V ON R.ID_VUELO = V.ID_VUELO INNER JOIN AEROLINEAS AS A ON A.ID_AEROLINEA = V.ID_AEROLINEA AND R.ESTADO = 'APROBADO' GROUP BY A.NOMBRE_AEROLINEA, A.PORCENTAJE")).ToList();
+		foreach(var v in ventas)
+		{
+			total += Math.Round(v.Total * v.Porcentaje / 100,2);
+		}
+
+		mosts = (await conn.QueryAsync<MostVisited>("SELECT * FROM MAS_VISITADOS")).ToList();
+		reservasMes = (await conn.QueryAsync<ReservasMes>("SELECT * FROM RESERVAS_MES")).ToList();
+		paquetes = (await conn.QueryAsync<Paquete>("SELECT * FROM PAQUETES")).ToList();
+		posts = (await conn.QueryAsync<Publicacion>("SELECT * FROM POSTS")).ToList();
+		usuarioReservas = (await conn.QueryAsync<UsuarioReserva>("SELECT * FROM INFO_RES")).ToList();
+		usuarioPaquetes = (await conn.QueryAsync<UsuarioPaquete>("SELECT * FROM INFO_RPAQUETES")).ToList();
+		chartKey1 = Guid.NewGuid();
+		chartKey2 = Guid.NewGuid();
+		var authstate = await authenticationState!;
+		foreach (var c in authstate.User.Claims)
+		{
+			Console.WriteLine(c.Type + c.Value);
+			if (c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid")
+			{
+				Id_user = int.Parse(c.Value);
+			}
+			if (c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+			{
+				Role = c.Value;
+			}
+
+		}
+		conn.Close();
+		if(Role == "USER")
+		{
+			await ChargeUserData();
+		}
+
+
+
+	}
+
+	// void InitializeTimer()
+	// {
+	// 	timer = new Timer(7000); 
+	// 	timer.Elapsed += (sender, e) =>
+	// 	{
+	// 		contador = (contador + 1) % 7;
+	// 		InvokeAsync(StateHasChanged); 
+	// 	};
+	// 	timer.Start();
+	// }
+	public string NombreMes(int m)
+	{
+		string mes = "";
+		switch (m)
+		{
+			case 1: mes = "Enero"; break;
+			case 2: mes = "Febrero"; break;
+			case 3: mes = "Marzo"; break;
+			case 4: mes = "Abril"; break;
+			case 5: mes = "Mayo"; break;
+			case 6: mes = "Junio"; break;
+			case 7: mes = "Julio"; break;
+			case 8: mes = "Agosto"; break;
+			case 9: mes = "Septiembre"; break;
+			case 10: mes = "Octubre"; break;
+			case 11: mes = "Noviembre"; break;
+			case 12: mes = "Diciembre"; break;
+			default: mes = " "; break;
+		}
+		return mes;
+	}
+
+	public async Task UpdateReservas(UsuarioPaquete ur, string accion)
+	{
+		try
+		{
+			FbConnection conn = await DatabaseConnection.GetConnectionAsync();
+			if (accion == "RECHAZADO")
+			{
+				await conn.ExecuteAsync("UPDATE RESERVA_PAQUETES SET ESTADO = @Estado WHERE ID_RESERVAP = @Id_reserva", new
+				{
+					Estado = accion,
+					Id_reserva = ur.Id_reservap
+				});
+
+
+
+			}
+			else
+			{
+				await conn.ExecuteAsync("UPDATE RESERVA_PAQUETES SET ESTADO = @Estado WHERE ID_RESERVAP = @Id_reserva", new
+				{
+					Estado = accion,
+					Id_reserva = ur.Id_reservap
+				});
+				DateTime FechaV = await conn.QueryFirstAsync<DateTime>("SELECT FECHA_SALIDA FROM PAQUETES WHERE ID_PAQUETE = @Id", new { Id = ur.Id_paquete });
+				await conn.ExecuteAsync(@"INSERT INTO PASE_PAQUETE(ID_USER, ID_RESERVA_P, ID_PAQUETE, FECHA_VENCIMIENTO) VALUES(
+										@Id_user, @Id_reserva, @Id_Vuelo, @Fecha_vencimiento)", new { Id_user = ur.Id_user, Id_reserva = ur.Id_reservap, Id_vuelo = ur.Id_paquete, Fecha_vencimiento = FechaV });
+
+
+			}
+			usuarioPaquetes = (await conn.QueryAsync<UsuarioPaquete>("SELECT * FROM  INFO_RPAQUETES")).ToList();
+			await JS.InvokeVoidAsync("alert", "Actualizado");
+			StateHasChanged();
+
+		}
+		catch (Exception ex)
+		{
+			await JS.InvokeVoidAsync("alert", $"Error {ex.Message}");
+		}
+
+	}
+
+	public async Task VerComprobante(UsuarioPaquete ur)
+	{
+
+		urlImagen = ur.GetImgUrl();
+		MComprobante = true;
+	}
+
+	public class MostVisited
+	{
+		public int Id { get; set; }
+		public string? Destino { get; set; }
+		public int Visitas { get; set; }
+	}
+
+	public class ReservasMes
+	{
+		public int Mes { get; set; }
+		public int Ano { get; set; }
+		public int Total { get; set; }
+	}
+	public class Ventas
+	{
+		public string Nombre_aerolinea {get; set;}
+		public int Porcentaje { get; set; }
+		public decimal Total { get; set; }
+	}
+
+
+	public async Task ChargeUserData()
+	{
+		try
+		{
+			FbConnection conn = await DatabaseConnection.GetConnectionAsync();
+
+
+			Stats[0] = await conn.QueryFirstAsync<string>("SELECT COUNT(*) FROM RESERVAS WHERE ID_USER = @Id", new { Id = Id_user })??"0";
+			decimal rvuelos = await conn.QueryFirstAsync<decimal>("SELECT SUM(MONTO_TOTAL) FROM RESERVAS WHERE ID_USER = @Id", new { Id = Id_user });
+			decimal rpaquetes = await conn.QueryFirstAsync<decimal>("SELECT SUM(MONTO_TOTAL) FROM RESERVA_PAQUETES WHERE ID_USER = @Id", new { Id = Id_user });
+			Stats[2] = $"{rvuelos + rpaquetes} Bs";
+			StateHasChanged();
+			conn.Close();
+		}catch(Exception ex)
+		{
+			Console.WriteLine($"Erro {ex.Message}");
+		}
+
+		
+	
+	}
+
+}

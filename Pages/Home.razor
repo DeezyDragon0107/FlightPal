@@ -1,0 +1,237 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@inject WelcomeService WelcomeService
+@inject NavigationManager navigationManager
+@using System.Globalization
+<PageTitle>FlightPal</PageTitle>
+<section class="animado">
+	<video class="principal-banner" autoplay muted>
+		<source src="/imgs/tiny.webm" type="video/webm" />
+	</video>
+	@* <img class="principal-banner" src="imgs\banner-4.jpg" alt="Alternate Text" style="width:100%; height: 100vh;" /> *@
+	<div class="welcome-title">
+		<h1>Descubre nuevas maneras de viajar por el mundo</h1>
+		<h3>Compara precios de distintas aerolíneas, consigue boletos con un solo click. Reserva ahora</h3>
+		
+
+	</div>
+	
+</section>
+
+<section class="sect2 anim-l">
+	<div class="inf-container" style="padding: 30px;">
+		<hgroup>
+			<h2>Viaja ahora con FlightPal</h2>
+			<h3> Con FlightPal tu destino soñado se encuentra a solo un click de distancia ¿Que estás esperando para registrarte en la agencia de viajes más innovadora de Venezuela?.</h3>
+		</hgroup>
+		
+
+	</div>
+	<div class="inf-container focused"style="padding: 30px;">
+		<ul>
+			<li>Reserva con un solo click</li>
+			<li>Descarga tus boletos y accede prioritariamente a tu vuelo</li>
+			<li>Gran cantidad de paquetes con multiples opciones de entretenimiento</li>
+			<li>Todo lo que necesitas para iniciar tu viaje en una sola plataforma</li>
+		</ul>
+
+	</div>
+</section>
+
+
+<section class="info anim-r" >
+	<header>
+		<h2>Principales Destinos</h2>
+	</header>
+
+	<article class="cards-container">
+		<div class="card">
+			<img class="card-img" src="/imgs/mgta.webp" alt="Alternate Text" />
+			
+			<div class="card-info-container" @onclick="()=>ShowModal(Ciudades.Margarita)">
+				<p>La perla del caribe</p>
+				<h3>Margarita</h3>
+			</div>
+		</div>
+
+		<div class="card">
+			<img class="card-img" src="/imgs/Caracas.jpg" alt="Alternate Text" />
+			
+			<div class="card-info-container" @onclick="()=>ShowModal(Ciudades.Caracas)"> 
+				<p>La capital del Pais, un destino imperdible</p>
+				<h3>Caracas</h3>
+			</div>
+		</div>
+
+		<div class="card">
+			<img class="card-img" src="/imgs/mcbo.webp" alt="Alternate Text" />
+			<div class="card-info-container" @onclick="()=>ShowModal(Ciudades.Maracaibo)">
+				<p>Cuna de algunas de las más bellas tradiciones venezolanas</p>
+				<h3>Maracaibo</h3>
+				<p></p>
+			</div>
+		</div>
+	</article>
+</section>
+
+<section class="second-banner anim-l">
+	<img src="./imgs/baner3.jpg" alt="Alternate Text" />
+	<video autoplay muted loop>
+		<source  src="/imgs/tiny.webm" type="video/webm"/>
+	</video>
+	<div class="inf-card">
+		<h2>No te pierdas las próximas ofertas de vuelo</h2>
+		<h4>Mantente informado a traves de nuestro newspaper digital</h4>
+		<button @onclick="@(()=>navigationManager.NavigateTo("login"))">Inscribete</button>
+	</div>
+
+</section>
+
+<section class="comments-section anim-r">
+	<h2>Nuestros pasajeros lo confirman!</h2>
+	<div class="comments-sec">
+		<button class="next" @onclick="slide"><i class="fi fi-sr-angle-right"></i></button>
+
+		<article class="comments-container"  style="transform: translateX(@traslacion)">
+			
+			<div class="comment" >
+				<div class="comment-content" draggable="true"   style="user-select: contain;">
+					<h3 style="transform: translateY(-1);"><i class="fi fi-br-quote-right"></i></h3>
+					<p>
+						Sinceramente, me sorprendió la fluidez de la interfaz. He usado muchísimas agencias digitales, pero esta es la primera donde el algoritmo de búsqueda realmente entiende lo que es una escala 'cómoda'.
+					
+					</p>
+					<Avatar Data="/imgs/yo.jpeg" Rounded><b>Diego<br /> Gomez</b></Avatar>
+				</div>
+			</div>
+			
+			<div class="comment">
+				<div class="comment-content">
+					<h3 style="transform: translateY(-1);"><i class="fi fi-br-quote-right"></i></h3>
+					<p>
+						¡Increíble para ofertas de último minuto! Me escapé un fin de semana a las montañas y conseguí un descuento del 40% en un hotel boutique que en otros sitios estaba a precio completo
+					</p>
+					<Avatar Data="/imgs/Avatars/2.png" Rounded><b>Juan<br /> Tineo</b></Avatar>
+				</div>
+			</div>
+
+			<div class="comment">
+				<div class="comment-content">
+					<h3 style="transform: translateY(-1);"><i class="fi fi-br-quote-right"></i></h3>
+					<p>
+						Amo que no te bombardeen con correos basura ni ventas cruzadas innecesarias durante el checkout. Es una experiencia de compra limpia: eliges, pagas y recibes tu itinerario.
+					</p>
+					<Avatar Data="/imgs/Avatars/10.png" Rounded><b>Oswaldo<br /> Gomez</b></Avatar>
+				</div>
+			</div>
+
+			<div class="comment">
+				<div class="comment-content">
+					<h3 style="transform: translateY(-1);"><i class="fi fi-br-quote-right"></i></h3>
+					<p>
+						Si sabes buscar, esta agencia tiene las mejores tarifas por error o 'early bird' del mercado.
+					</p>
+					<Avatar Data="/imgs/Avatars/16.png" Rounded><b>Pedro<br /> Alfonso</b></Avatar>
+				</div>
+			</div>
+
+			<div class="comment">
+				<div class="comment-content">
+					<h3 style="transform: translateY(-1);"><i class="fi fi-br-quote-right"></i></h3>
+					<p>
+						5 QSem nulla eu ultricies orci praesent id augue nec lorem pretium congue sit amet ac nunc fusce iaculis lorem eu diam hendrerit at mattis purus dignissim vivamus mauris tellus, fringilla.
+						Vel dapibus a, blandit quis erat vivamus elementum aliquam luctus etiam fringilla pretium sem vitae
+					</p>
+					<Avatar Data="/imgs/yo.jpeg" Rounded><b>Diego<br /> Gomez</b></Avatar>
+				</div>
+			</div>
+		</article>
+
+	</div> 
+
+</section>
+
+
+<section class="image-section anim-l">
+	<img src="/imgs/pexels-quintingellar-313765.webp" alt="Alternate Text" />
+	<h2>Alcanza nuevas alturas con FlightPal!</h2>
+
+</section>
+
+<AuthorizeView>
+	<Authorized>
+		<Modal Displayed="WelcomeService.GreetingDisplayed" DisplayedChanged="()=>CloseModalBienvenida()">
+			<div class="greeting">
+				<img src="/imgs/telefono-inteligente.gif" alt="" />
+				<h3>Bienvenido @(
+									new CultureInfo("Es-es", false).TextInfo.ToTitleCase(context.User?.Identity?.Name.ToLower())
+
+				)</h3>
+			</div>
+			
+
+		</Modal>
+	</Authorized>
+</AuthorizeView>
+
+
+
+
+<Modal Displayed="@modal" DisplayedChanged="()=>CloseModal()">
+	<City CityName=@CiudadActual></City>
+
+</Modal>
+@code{
+	
+	public bool? modalBienvenida { get; set; } = null;
+
+
+	protected override Task OnInitializedAsync()
+	{
+		return base.OnInitializedAsync();
+	}
+
+	
+
+	public async Task ShowModal(Ciudades c)
+	{
+		CiudadActual = (int)c;
+		modal = true;
+		StateHasChanged();
+	}
+
+	public async Task slide()
+	{
+
+		contador = (contador+1)%2;
+		Console.WriteLine(contador);
+		traslacion = $"-{contador*100}%";
+
+	}
+
+	public bool CloseModal()
+	{
+
+		modal = false;
+		StateHasChanged();
+		return modal;
+	}
+
+	public bool CloseModalBienvenida()
+	{
+
+		WelcomeService.GreetingDisplayed = false;
+		StateHasChanged();
+		return WelcomeService.GreetingDisplayed;
+	}
+
+
+	public enum Ciudades { Margarita, Caracas, Maracaibo }
+	public bool modal { get; set; } = false;
+	public int CiudadActual { get; set; }
+	public string traslacion { get; set; } = "0";
+	public int contador { get; set; } = 0;
+
+	
+}
